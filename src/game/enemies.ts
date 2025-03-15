@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { GAME_CONFIG } from './scene';
+import { getCurrentTheme, EnemyColor } from './color-config';
 
 /**
  * Enemy definition interface
@@ -30,7 +31,16 @@ export const DEFAULT_ENEMIES: EnemyDefinition[] = [
       x: -4,
       y: -3.8
     },
-    color: 0xFF0000,  // Red
+    // Red (default)
+    // color: 0xFF0000,
+    // Dark Red
+    // color: 0xC0392B,
+    // Maroon
+    // color: 0x800000,
+    // Purple
+    color: 0x8E44AD,
+    // Dark Green
+    // color: 0x27AE60,
     moveType: 'stationary',
     gravity: 20
   },
@@ -43,7 +53,16 @@ export const DEFAULT_ENEMIES: EnemyDefinition[] = [
       x: -2,
       y: 0.6
     },
+    // Red (default)
     color: 0xFF0000,
+    // Dark Blue
+    // color: 0x2980B9,
+    // Midnight Blue
+    // color: 0x2C3E50,
+    // Bright Pink
+    // color: 0xE91E63,
+    // Crimson
+    // color: 0xDC143C,
     moveType: 'horizontal',
     moveSpeed: 2,
     moveRange: 5,
@@ -58,7 +77,16 @@ export const DEFAULT_ENEMIES: EnemyDefinition[] = [
       x: 2,
       y: -3.8
     },
+    // Red (default)
     color: 0xFF0000,
+    // Dark Red
+    // color: 0xC0392B,
+    // Burgundy
+    // color: 0x900C3F,
+    // Deep Purple
+    // color: 0x673AB7,
+    // Brown
+    // color: 0x795548,
     moveType: 'horizontal',
     moveSpeed: 3,
     moveRange: 3,
@@ -73,7 +101,16 @@ export const DEFAULT_ENEMIES: EnemyDefinition[] = [
       x: -4.5,
       y: 0.6
     },
-    color: 0xFF4500, // OrangeRed
+    // OrangeRed (default)
+    color: 0xFF4500,
+    // Dark Orange
+    // color: 0xD35400,
+    // Red-Orange
+    // color: 0xE74C3C,
+    // Cherry Red
+    // color: 0xF44336,
+    // Hot Pink
+    // color: 0xFF69B4,
     moveType: 'stationary',
     gravity: 20
   }
@@ -112,7 +149,7 @@ export class Enemy {
     // Create mesh
     const geometry = new THREE.PlaneGeometry(this.width, this.height);
     const material = new THREE.MeshBasicMaterial({
-      color: definition.color || 0xFF0000,
+      color: definition.color || getCurrentTheme().enemy,
       side: THREE.DoubleSide
     });
     

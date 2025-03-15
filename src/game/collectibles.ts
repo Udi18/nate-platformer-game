@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { GAME_CONFIG } from './scene';
+import { getCurrentTheme, CollectibleColor } from './color-config';
 
 /**
  * Collectible definition interface
@@ -25,7 +26,16 @@ export const DEFAULT_COLLECTIBLES: CollectibleDefinition[] = [
       x: 4,
       y: -3.5
     },
-    color: 0xFFD700  // Gold
+    // Gold (default)
+    color: 0xFFD700,
+    // Silver
+    // color: 0xC0C0C0,
+    // Bronze
+    // color: 0xCD7F32,
+    // Diamond Blue
+    // color: 0xB9F2FF,
+    // Emerald Green
+    // color: 0x50C878
   },
   
   // Collectible on middle platform
@@ -35,7 +45,16 @@ export const DEFAULT_COLLECTIBLES: CollectibleDefinition[] = [
       x: -3,
       y: 0.5
     },
-    color: 0xFFD700
+    // Gold (default)
+    color: 0xFFD700,
+    // Silver
+    // color: 0xC0C0C0,
+    // Rainbow (purple-ish)
+    // color: 0x9C27B0,
+    // Turquoise
+    // color: 0x40E0D0,
+    // Bright Yellow
+    // color: 0xFFEB3B
   },
   
   // Collectible on the stepping platform
@@ -45,7 +64,16 @@ export const DEFAULT_COLLECTIBLES: CollectibleDefinition[] = [
       x: 0.5,
       y: 1.2
     },
-    color: 0xFFD700
+    // Gold (default)
+    color: 0xFFD700,
+    // Platinum
+    // color: 0xE5E4E2,
+    // Aqua
+    // color: 0x00FFFF,
+    // Amethyst
+    // color: 0x9966CC,
+    // Lime Green
+    // color: 0x32CD32
   },
   
   // Collectible on upper platform
@@ -55,7 +83,16 @@ export const DEFAULT_COLLECTIBLES: CollectibleDefinition[] = [
       x: 3.5,
       y: 1.7
     },
-    color: 0xFFD700
+    // Gold (default)
+    color: 0xFFD700,
+    // Pearl White
+    // color: 0xFFFFF0,
+    // Rose Gold
+    // color: 0xB76E79,
+    // Sapphire
+    // color: 0x0F52BA,
+    // Ruby Red
+    // color: 0xE0115F
   },
   
   // Left extended area collectibles
@@ -65,7 +102,16 @@ export const DEFAULT_COLLECTIBLES: CollectibleDefinition[] = [
       x: -10,
       y: -2.3
     },
-    color: 0xFFD700
+    // Gold (default)
+    color: 0xFFD700,
+    // Copper
+    // color: 0xB87333,
+    // Amber
+    // color: 0xFFBF00,
+    // Jade Green
+    // color: 0x00A86B,
+    // Lavender
+    // color: 0xE6E6FA
   },
   {
     radius: 0.3,
@@ -73,7 +119,16 @@ export const DEFAULT_COLLECTIBLES: CollectibleDefinition[] = [
       x: -16,
       y: -1.3
     },
-    color: 0xFFD700
+    // Gold (default)
+    color: 0xFFD700,
+    // Obsidian Black
+    // color: 0x3D3635,
+    // Coral Pink
+    // color: 0xF88379,
+    // Garnet Red
+    // color: 0x733635,
+    // Neon Green
+    // color: 0x39FF14
   },
   
   // Right extended area collectibles
@@ -83,7 +138,16 @@ export const DEFAULT_COLLECTIBLES: CollectibleDefinition[] = [
       x: 12,
       y: -2.3
     },
-    color: 0xFFD700
+    // Gold (default)
+    color: 0xFFD700,
+    // Opal White
+    // color: 0xE5E4E2,
+    // Topaz Yellow
+    // color: 0xFFC87C,
+    // Cobalt Blue
+    // color: 0x0047AB,
+    // Crystal Clear
+    // color: 0xDCF8FF
   },
   {
     radius: 0.3,
@@ -91,7 +155,16 @@ export const DEFAULT_COLLECTIBLES: CollectibleDefinition[] = [
       x: 18,
       y: -1.3
     },
-    color: 0xFFD700
+    // Gold (default)
+    color: 0xFFD700,
+    // Mithril Silver
+    // color: 0xACBDCA,
+    // Golden Pearl
+    // color: 0xEEE8AA,
+    // Ice Blue
+    // color: 0x99FFFF,
+    // Neon Purple
+    // color: 0xBF00FF
   }
 ];
 
@@ -112,7 +185,7 @@ export class Collectible {
     // Create mesh (using a circle geometry)
     const geometry = new THREE.CircleGeometry(this.radius, 16);
     const material = new THREE.MeshBasicMaterial({
-      color: definition.color || 0xFFD700,
+      color: definition.color || getCurrentTheme().collectible,
       side: THREE.DoubleSide
     });
     

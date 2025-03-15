@@ -1,3 +1,5 @@
+import { applyThemeToUI } from './color-config';
+
 /**
  * UI Manager to handle HUD and UI elements
  */
@@ -39,6 +41,9 @@ export class UIManager {
     
     // Initialize UI with default values
     this.updateScore(0);
+    
+    // Apply theme colors to UI elements
+    applyThemeToUI();
   }
   
   /**

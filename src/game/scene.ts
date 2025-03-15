@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { getCurrentTheme, BackgroundColor } from './color-config';
 
 /**
  * Game constants for scene configuration
@@ -6,8 +7,7 @@ import * as THREE from 'three';
 export const GAME_CONFIG = {
   // Visual settings
   WORLD_UNIT: 100, // 1 world unit = 100 pixels
-  BACKGROUND_COLOR: 0x87CEEB, // Sky blue
-
+  
   // Game area dimensions (in world units)
   WIDTH: 16,  // Standard 16:9 aspect ratio
   HEIGHT: 9,
@@ -34,7 +34,7 @@ export const GAME_CONFIG = {
  */
 export function createGameScene(): THREE.Scene {
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(GAME_CONFIG.BACKGROUND_COLOR);
+  scene.background = new THREE.Color(getCurrentTheme().background);
   
   return scene;
 }

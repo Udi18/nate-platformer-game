@@ -1,6 +1,7 @@
 import { PlatformDefinition } from './platforms';
 import { EnemyDefinition } from './enemies';
 import { CollectibleDefinition } from './collectibles';
+import { getCurrentTheme, PlatformColor, EnemyColor, CollectibleColor } from './color-config';
 
 export interface LevelGenerationParams {
   seed?: number;
@@ -95,6 +96,57 @@ let randomGenerator = new SeededRandom();
 
 function randomBetween(min: number, max: number): number {
   return randomGenerator.randomBetween(min, max);
+}
+
+/**
+ * Generates a slightly varied color based on a base color
+ * @param baseColor The base color to vary
+ * @param amount The amount to vary the color (0-1)
+ * @returns A slightly different shade of the base color
+ */
+function varyColor(baseColor: number, amount: number = 0.2): number {
+  // Extract RGB components
+  const r = (baseColor >> 16) & 0xFF;
+  const g = (baseColor >> 8) & 0xFF;
+  const b = baseColor & 0xFF;
+  
+  // Calculate variation amounts (slightly brighten or darken)
+  const variance = randomBetween(-amount, amount);
+  
+  // Apply variation while keeping values in 0-255 range
+  const newR = Math.max(0, Math.min(255, Math.round(r * (1 + variance))));
+  const newG = Math.max(0, Math.min(255, Math.round(g * (1 + variance))));
+  const newB = Math.max(0, Math.min(255, Math.round(b * (1 + variance))));
+  
+  // Recombine into a single color value
+  return (newR << 16) | (newG << 8) | newB;
+}
+
+/**
+ * Gets a platform color with slight variation
+ */
+function getPlatformColor(): number {
+  return varyColor(getCurrentTheme().platform, 0.15);
+}
+
+/**
+ * Gets an enemy color with slight variation
+ * @param isSpecial If true, use a special enemy color if available
+ */
+function getEnemyColor(isSpecial: boolean = false): number {
+  const theme = getCurrentTheme();
+  const baseColor = isSpecial && theme.enemySpecial ? theme.enemySpecial : theme.enemy;
+  return varyColor(baseColor, 0.2);
+}
+
+/**
+ * Gets a collectible color with slight variation
+ * @param isSpecial If true, use a special collectible color if available
+ */
+function getCollectibleColor(isSpecial: boolean = false): number {
+  const theme = getCurrentTheme();
+  const baseColor = isSpecial && theme.collectibleSpecial ? theme.collectibleSpecial : theme.collectible;
+  return varyColor(baseColor, 0.1);
 }
 
 function platformOverlaps(
@@ -216,7 +268,7 @@ export function generatePlatforms(params: LevelGenerationParams = DEFAULT_LEVEL_
       x: 0,
       y: groundY
     },
-    color: 0x8B4513
+    color: getPlatformColor()
   });
   
   let currentX = -8;
@@ -240,7 +292,7 @@ export function generatePlatforms(params: LevelGenerationParams = DEFAULT_LEVEL_
             x: currentX - actualWidth / 2,
             y: groundY
           },
-          color: 0x8B4513
+          color: getPlatformColor()
         });
       }
       
@@ -269,7 +321,7 @@ export function generatePlatforms(params: LevelGenerationParams = DEFAULT_LEVEL_
             x: currentX + actualWidth / 2,
             y: groundY
           },
-          color: 0x8B4513
+          color: getPlatformColor()
         });
       }
       
@@ -294,7 +346,7 @@ export function generatePlatforms(params: LevelGenerationParams = DEFAULT_LEVEL_
         x,
         y: firstRowY
       },
-      color: 0x8B4513
+      color: getPlatformColor()
     };
     
     if (isPlatformLocationValid(x, firstRowY, width, params.minPlatformHeight, platforms, params, true)) {
@@ -341,7 +393,7 @@ export function generatePlatforms(params: LevelGenerationParams = DEFAULT_LEVEL_
                 x: bridgeX,
                 y: firstRowY + randomBetween(-0.5, 0.5)
               },
-              color: 0x8B4513
+              color: getPlatformColor()
             };
             
             if (isPlatformLocationValid(
@@ -385,7 +437,7 @@ export function generatePlatforms(params: LevelGenerationParams = DEFAULT_LEVEL_
             x,
             y: currentHeight + (isLeft ? randomBetween(-0.5, 0.5) : randomBetween(-0.5, 0.5))
           },
-          color: 0x8B4513
+          color: getPlatformColor()
         };
         
         if (isPlatformLocationValid(
@@ -418,7 +470,7 @@ export function generatePlatforms(params: LevelGenerationParams = DEFAULT_LEVEL_
             x,
             y: currentHeight + randomBetween(-0.3, 0.3)
           },
-          color: 0x8B4513
+          color: getPlatformColor()
         };
         
         if (isPlatformLocationValid(
@@ -484,7 +536,7 @@ export function generatePlatforms(params: LevelGenerationParams = DEFAULT_LEVEL_
             x: connectX,
             y: connectY
           },
-          color: 0x8B4513
+          color: getPlatformColor()
         };
         
         if (isPlatformLocationValid(
@@ -561,7 +613,7 @@ export function generateEnemies(
             x,
             y: platform.position.y + platform.height / 2 + 0.35
           },
-          color: Math.random() < 0.3 ? 0xFF4500 : 0xFF0000,
+          color: getEnemyColor(Math.random() < 0.3),
           moveType: moveType as 'stationary' | 'horizontal',
           moveSpeed: moveType === 'horizontal' ? randomBetween(1, 2) : 0,
           moveRange,
@@ -602,7 +654,7 @@ export function generateEnemies(
           x,
           y: groundPlatform.position.y + groundPlatform.height / 2 + 0.35
         },
-        color: 0xFF0000,
+        color: getEnemyColor(false),
         moveType: Math.random() < 0.6 ? 'horizontal' : 'stationary',
         moveSpeed: randomBetween(1.5, 3),
         moveRange: randomBetween(2, 4),
@@ -650,7 +702,7 @@ export function generateCollectibles(
             x: x + randomBetween(-0.1, 0.1),
             y: platform.position.y + platform.height / 2 + params.collectibleHeight
           },
-          color: 0xFFD700
+          color: getCollectibleColor(Math.random() < 0.2)
         });
       }
     }
@@ -685,7 +737,7 @@ export function generateCollectibles(
               x,
               y: groundY + 1 + archHeight
             },
-            color: 0xFFD700
+            color: getCollectibleColor(Math.random() < 0.15)
           });
         }
       }
@@ -721,7 +773,7 @@ export function generateCollectibles(
                 x: startX + (endX - startX) * ratio,
                 y: startY + (endY - startY) * ratio + Math.sin(Math.PI * ratio) * 0.5
               },
-              color: 0xFFD700
+              color: getCollectibleColor(Math.random() < 0.25)
             });
           }
         }

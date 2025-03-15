@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { GAME_CONFIG } from './scene';
 import { Collectible } from './collectibles';
 import { Enemy } from './enemies';
+import { getCurrentTheme, PlayerColor } from './color-config';
 
 /**
  * Player state interface
@@ -24,7 +25,16 @@ export interface PlayerState {
 export const DEFAULT_PLAYER = {
   width: 0.8,
   height: 0.8,
-  color: 0x3498db,
+  // Blue (default)
+  // color: 0x3498db,
+  // Green
+  // color: 0x2ecc71,
+  // Purple
+  // color: 0x9b59b6,
+  // Orange
+  color: 0xe67e22,
+  // Teal
+  // color: 0x1abc9c,
   position: {
     x: 0,
     y: -3.5  // Just above the ground platform
@@ -73,7 +83,7 @@ export class Player {
     // Create mesh
     const geometry = new THREE.PlaneGeometry(this.width, this.height);
     const material = new THREE.MeshBasicMaterial({ 
-      color: config.color, 
+      color: config.color || getCurrentTheme().player, 
       side: THREE.DoubleSide 
     });
     

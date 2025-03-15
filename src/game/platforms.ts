@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { GAME_CONFIG } from './scene';
+import { getCurrentTheme, PlatformColor } from './color-config';
 
 /**
  * Platform definition interface
@@ -115,7 +116,7 @@ export function createPlatform(platform: PlatformDefinition): THREE.Mesh {
   );
   
   const material = new THREE.MeshBasicMaterial({
-    color: platform.color || 0x8B4513,
+    color: platform.color || getCurrentTheme().platform,
     side: THREE.DoubleSide
   });
   
