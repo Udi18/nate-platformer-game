@@ -35,18 +35,29 @@ export const DEFAULT_PLATFORMS: PlatformDefinition[] = [
     height: 0.5,
     position: {
       x: -2,
-      y: -2
+      y: -2.5  // Adjusted higher for better jumping
     },
     color: 0x8B4513
   },
   
-  // Upper platform
+  // Upper platform (lowered to be reachable)
   {
     width: 4,
     height: 0.5,
     position: {
-      x: 4,
-      y: 2
+      x: 3,
+      y: -1.2  // Lowered to be reachable
+    },
+    color: 0x8B4513
+  },
+  
+  // Small stepping platform to help reach upper platform
+  {
+    width: 2,
+    height: 0.5,
+    position: {
+      x: 0.5,
+      y: 0.7  // Between middle and upper platforms
     },
     color: 0x8B4513
   }

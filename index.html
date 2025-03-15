@@ -8,6 +8,33 @@
   </head>
   <body>
     <div id="app"></div>
+    
+    <!-- HUD Overlay -->
+    <div id="hud">
+      <div id="score-container">
+        <div id="score-label">SCORE:</div>
+        <div id="score-value">0</div>
+      </div>
+      
+      <div id="controls-container">
+        <button id="pause-button">⏸️ Pause (P)</button>
+        <button id="restart-button" title="Double-click to restart">🔄 Restart</button>
+      </div>
+    </div>
+    
+    <!-- Pause Overlay -->
+    <div id="pause-overlay">
+      <div id="pause-message">Game Paused</div>
+    </div>
+    
+    <!-- Main Menu Overlay -->
+    <div id="main-menu">
+      <div class="menu-content">
+        <h1>Nate's Adventure</h1>
+        <button id="start-button">Start Game</button>
+      </div>
+    </div>
+    
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

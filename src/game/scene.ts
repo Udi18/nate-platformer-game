@@ -12,17 +12,19 @@ export const GAME_CONFIG = {
   WIDTH: 16,  // Standard 16:9 aspect ratio
   HEIGHT: 9,
   
-  // Camera settings
+  // Camera settings 
   NEAR_PLANE: 0.1,
   FAR_PLANE: 1000,
-  CAMERA_Z: 10,
+  CAMERA_Z: 5, // Set closer to see objects better
   
-  // Layer positions on Z-axis
+  // Layer positions on Z-axis (moved forward to be more visible)
   LAYERS: {
     BACKGROUND: 0,
-    PLATFORMS: 5,
-    PLAYER: 6,
-    FOREGROUND: 9
+    PLATFORMS: 1,
+    COLLECTIBLES: 2,
+    ENEMIES: 3,
+    PLAYER: 4,
+    FOREGROUND: 5
   }
 };
 

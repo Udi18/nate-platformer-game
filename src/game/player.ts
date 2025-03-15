@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 import { GAME_CONFIG } from './scene';
+import { Collectible } from './collectibles';
+import { Enemy } from './enemies';
 
 /**
  * Player state interface
@@ -193,5 +195,82 @@ export class Player {
         this.updateMeshPosition();
       }
     });
+  }
+  
+  /**
+   * Check collision with collectibles
+   * @param collectibles Array of collectible objects
+   * @returns Array of collected item indices
+   */
+  public checkCollectibleCollisions(collectibles: Collectible[]): number[] {
+    const collectedIndices: number[] = [];
+    
+    // Calculate player bounds
+    const playerLeft = this.position.x - this.width / 2;
+    const playerRight = this.position.x + this.width / 2;
+    const playerTop = this.position.y + this.height / 2;
+    const playerBottom = this.position.y - this.height / 2;
+    
+    collectibles.forEach((collectible, index) => {
+      // Skip already collected items
+      if (collectible.isCollected) {
+        return;
+      }
+      
+      // Simple circle-rectangle collision detection
+      // Find closest point on rectangle to circle center
+      const closestX = Math.max(playerLeft, Math.min(collectible.position.x, playerRight));
+      const closestY = Math.max(playerBottom, Math.min(collectible.position.y, playerTop));
+      
+      // Calculate distance between circle center and closest point
+      const distanceX = collectible.position.x - closestX;
+      const distanceY = collectible.position.y - closestY;
+      
+      // Check if distance is less than circle radius
+      const distanceSquared = (distanceX * distanceX) + (distanceY * distanceY);
+      
+      if (distanceSquared < (collectible.radius * collectible.radius)) {
+        // Collision detected, mark as collected
+        collectible.collect();
+        collectedIndices.push(index);
+      }
+    });
+    
+    return collectedIndices;
+  }
+  
+  /**
+   * Check collision with enemies
+   * @param enemies Array of enemy objects
+   * @returns True if collision detected
+   */
+  public checkEnemyCollisions(enemies: Enemy[]): boolean {
+    // Calculate player bounds
+    const playerLeft = this.position.x - this.width / 2;
+    const playerRight = this.position.x + this.width / 2;
+    const playerTop = this.position.y + this.height / 2;
+    const playerBottom = this.position.y - this.height / 2;
+    
+    for (const enemy of enemies) {
+      // Calculate enemy bounds
+      const enemyLeft = enemy.position.x - enemy.width / 2;
+      const enemyRight = enemy.position.x + enemy.width / 2;
+      const enemyTop = enemy.position.y + enemy.height / 2;
+      const enemyBottom = enemy.position.y - enemy.height / 2;
+      
+      // AABB collision check
+      if (
+        playerRight > enemyLeft &&
+        playerLeft < enemyRight &&
+        playerTop > enemyBottom &&
+        playerBottom < enemyTop
+      ) {
+        // Log collision (as per requirements)
+        console.log('Enemy collision detected!');
+        return true;
+      }
+    }
+    
+    return false;
   }
 }
