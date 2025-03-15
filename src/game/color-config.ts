@@ -9,7 +9,8 @@ export enum PlayerColor {
   GREEN = 0x2ecc71,
   PURPLE = 0x9b59b6,
   ORANGE = 0xe67e22,
-  TEAL = 0x1abc9c
+  TEAL = 0x1abc9c,
+  RED = 0xe74c3c
 }
 
 export enum PlatformColor {
@@ -181,12 +182,32 @@ export const SUNSET_THEME: GameTheme = {
   uiScore: UIAccentColor.GOLD
 };
 
+export const LAVA_THEME: GameTheme = {
+  name: "Lava",
+  
+  background: BackgroundColor.NIGHT,
+  player: PlayerColor.RED,
+  platform: PlatformColor.DARK_BROWN,
+  enemy: EnemyColor.DARK_RED,
+  collectible: CollectibleColor.BRIGHT_YELLOW,
+  
+  // Special variants
+  enemySpecial: EnemyColor.ORANGE_RED,
+  collectibleSpecial: CollectibleColor.EMERALD,
+  
+  uiText: UITextColor.WHITE,
+  uiBackground: UIBackgroundColor.DARKER,
+  uiAccent: UIAccentColor.RED,
+  uiScore: UIAccentColor.GOLD
+};
+
 // Available themes
 export const THEMES: Record<string, GameTheme> = {
   classic: CLASSIC_THEME,
   dark: DARK_THEME,
   forest: FOREST_THEME,
-  sunset: SUNSET_THEME
+  sunset: SUNSET_THEME,
+  lava: LAVA_THEME
 };
 
 // Current active theme

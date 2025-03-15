@@ -25,16 +25,8 @@ export interface PlayerState {
 export const DEFAULT_PLAYER = {
   width: 0.8,
   height: 0.8,
-  // Blue (default)
-  // color: 0x3498db,
-  // Green
-  // color: 0x2ecc71,
-  // Purple
-  // color: 0x9b59b6,
-  // Orange
-  color: 0xe67e22,
-  // Teal
-  // color: 0x1abc9c,
+  // Color is now managed by the theme system
+  // and will be applied in the constructor
   position: {
     x: 0,
     y: -3.5  // Just above the ground platform

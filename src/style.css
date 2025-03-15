@@ -13,7 +13,7 @@
   /* Base styles */
   color-scheme: light dark;
   color: var(--ui-text);
-  background-color: #242424;
+  background-color: var(--ui-background, #242424);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -23,11 +23,11 @@
 
 a {
   font-weight: 500;
-  color: #646cff;
+  color: var(--ui-accent, #646cff);
   text-decoration: inherit;
 }
 a:hover {
-  color: #535bf2;
+  color: var(--ui-highlight, #535bf2);
 }
 
 body {
@@ -177,7 +177,8 @@ h1 {
 }
 
 #restart-from-game-over-button:hover, #new-level-from-game-over-button:hover {
-  background-color: #45a049;
+  background-color: rgba(0, 0, 0, 0.9);
+  border-color: rgba(255, 255, 255, 0.5);
   transform: scale(1.05);
 }
 
@@ -223,7 +224,8 @@ h1 {
 }
 
 #start-button:hover {
-  background-color: #45a049;
+  background-color: rgba(0, 0, 0, 0.9);
+  border-color: rgba(255, 255, 255, 0.5);
   transform: scale(1.05);
 }
 
@@ -234,10 +236,10 @@ h1 {
   transition: filter 300ms;
 }
 .logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
+  filter: drop-shadow(0 0 2em var(--ui-accent, #646cffaa));
 }
 .logo.vanilla:hover {
-  filter: drop-shadow(0 0 2em #3178c6aa);
+  filter: drop-shadow(0 0 2em var(--ui-accent, #3178c6aa));
 }
 
 .card {
@@ -245,7 +247,7 @@ h1 {
 }
 
 .read-the-docs {
-  color: #888;
+  color: var(--ui-text, #888);
 }
 
 button {
@@ -255,12 +257,12 @@ button {
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
+  background-color: var(--ui-background, #1a1a1a);
   cursor: pointer;
   transition: border-color 0.25s;
 }
 button:hover {
-  border-color: #646cff;
+  border-color: var(--ui-accent, #646cff);
 }
 button:focus,
 button:focus-visible {
@@ -269,13 +271,15 @@ button:focus-visible {
 
 @media (prefers-color-scheme: light) {
   :root {
-    color: #213547;
+    --ui-text: #213547;
+    --ui-background: rgba(255, 255, 255, 0.8);
+    color: var(--ui-text);
     background-color: #ffffff;
   }
   a:hover {
-    color: #747bff;
+    color: var(--ui-highlight, #747bff);
   }
   button {
-    background-color: #f9f9f9;
+    background-color: var(--ui-background, #f9f9f9);
   }
 }

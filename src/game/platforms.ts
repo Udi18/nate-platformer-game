@@ -27,7 +27,8 @@ export const DEFAULT_PLATFORMS: PlatformDefinition[] = [
       x: 0,
       y: -4.3  // Bottom of the screen
     },
-    color: 0x8B4513  // Brown
+    // Colors are now managed by the theme system
+    // and will be applied in the constructor
   },
   
   // Middle platform
@@ -38,7 +39,7 @@ export const DEFAULT_PLATFORMS: PlatformDefinition[] = [
       x: -2,
       y: -2.5  // Adjusted higher for better jumping
     },
-    color: 0x8B4513
+    // Colors are now managed by the theme system
   },
   
   // Upper platform (lowered to be reachable)
@@ -49,7 +50,7 @@ export const DEFAULT_PLATFORMS: PlatformDefinition[] = [
       x: 3,
       y: -1.2  // Lowered to be reachable
     },
-    color: 0x8B4513
+    // Colors are now managed by the theme system
   },
   
   // Small stepping platform to help reach upper platform
@@ -60,7 +61,7 @@ export const DEFAULT_PLATFORMS: PlatformDefinition[] = [
       x: 0.5,
       y: 0.7  // Between middle and upper platforms
     },
-    color: 0x8B4513
+    // Colors are now managed by the theme system
   },
   
   // Left side extended platforms
@@ -71,7 +72,7 @@ export const DEFAULT_PLATFORMS: PlatformDefinition[] = [
       x: -10,
       y: -3  // Slightly above ground
     },
-    color: 0x8B4513
+    // Colors are now managed by the theme system
   },
   {
     width: 4,
@@ -80,7 +81,7 @@ export const DEFAULT_PLATFORMS: PlatformDefinition[] = [
       x: -16,
       y: -2  // Higher platform
     },
-    color: 0x8B4513
+    // Colors are now managed by the theme system
   },
   
   // Right side extended platforms
@@ -91,7 +92,7 @@ export const DEFAULT_PLATFORMS: PlatformDefinition[] = [
       x: 12,
       y: -3  // Slightly above ground
     },
-    color: 0x8B4513
+    // Colors are now managed by the theme system
   },
   {
     width: 4,
@@ -100,7 +101,7 @@ export const DEFAULT_PLATFORMS: PlatformDefinition[] = [
       x: 18,
       y: -2  // Higher platform
     },
-    color: 0x8B4513
+    // Colors are now managed by the theme system
   }
 ];
 
