@@ -131,6 +131,48 @@ h1 {
   text-align: center;
 }
 
+/* Game Over Overlay */
+#game-over-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 175; /* Higher than pause overlay */
+}
+
+#game-over-message {
+  font-size: 3rem;
+  color: #FF5252;
+  background-color: rgba(0, 0, 0, 0.8);
+  padding: 20px 30px;
+  border-radius: 10px;
+  text-align: center;
+  margin-bottom: 20px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+#restart-from-game-over-button {
+  background-color: #4CAF50; /* Green */
+  color: white;
+  font-size: 1.2rem;
+  padding: 12px 30px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+#restart-from-game-over-button:hover {
+  background-color: #45a049;
+  transform: scale(1.05);
+}
+
 /* Main Menu Styles */
 #main-menu {
   position: fixed;
@@ -139,7 +181,7 @@ h1 {
   width: 100%;
   height: 100%;
   background-color: rgba(0, 0, 0, 0.8);
-  display: none; /* Hide the menu for now */
+  display: none; /* Hidden by default, will be shown via JS when needed */
   justify-content: center;
   align-items: center;
   z-index: 200; /* Higher than HUD */

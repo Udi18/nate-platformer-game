@@ -273,4 +273,13 @@ export class Player {
     
     return false;
   }
+  
+  /**
+   * Check if player has fallen below the visible play area
+   * @param minY The minimum Y value of the visible area
+   * @returns True if player is below the visible area
+   */
+  public checkFallOutOfBounds(minY: number): boolean {
+    return this.position.y < minY;
+  }
 }

@@ -20,7 +20,7 @@ export interface PlatformDefinition {
 export const DEFAULT_PLATFORMS: PlatformDefinition[] = [
   // Ground platform
   {
-    width: 20,  // Full width of the view
+    width: 42,  // Extended ground platform (42 units wide)
     height: .5,
     position: {
       x: 0,
@@ -58,6 +58,46 @@ export const DEFAULT_PLATFORMS: PlatformDefinition[] = [
     position: {
       x: 0.5,
       y: 0.7  // Between middle and upper platforms
+    },
+    color: 0x8B4513
+  },
+  
+  // Left side extended platforms
+  {
+    width: 6,
+    height: 0.5,
+    position: {
+      x: -10,
+      y: -3  // Slightly above ground
+    },
+    color: 0x8B4513
+  },
+  {
+    width: 4,
+    height: 0.5,
+    position: {
+      x: -16,
+      y: -2  // Higher platform
+    },
+    color: 0x8B4513
+  },
+  
+  // Right side extended platforms
+  {
+    width: 5,
+    height: 0.5,
+    position: {
+      x: 12,
+      y: -3  // Slightly above ground
+    },
+    color: 0x8B4513
+  },
+  {
+    width: 4,
+    height: 0.5,
+    position: {
+      x: 18,
+      y: -2  // Higher platform
     },
     color: 0x8B4513
   }

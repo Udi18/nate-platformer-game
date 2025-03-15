@@ -56,6 +56,42 @@ export const DEFAULT_COLLECTIBLES: CollectibleDefinition[] = [
       y: 1.7
     },
     color: 0xFFD700
+  },
+  
+  // Left extended area collectibles
+  {
+    radius: 0.3,
+    position: {
+      x: -10,
+      y: -2.3
+    },
+    color: 0xFFD700
+  },
+  {
+    radius: 0.3,
+    position: {
+      x: -16,
+      y: -1.3
+    },
+    color: 0xFFD700
+  },
+  
+  // Right extended area collectibles
+  {
+    radius: 0.3,
+    position: {
+      x: 12,
+      y: -2.3
+    },
+    color: 0xFFD700
+  },
+  {
+    radius: 0.3,
+    position: {
+      x: 18,
+      y: -1.3
+    },
+    color: 0xFFD700
   }
 ];
 

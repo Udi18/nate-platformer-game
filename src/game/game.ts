@@ -1,10 +1,28 @@
 import * as THREE from 'three';
-import { createGameScene, createGameCamera, handleResize } from './scene';
+import { createGameScene, createGameCamera, handleResize, GAME_CONFIG } from './scene';
 import { createPlatforms, PlatformDefinition, DEFAULT_PLATFORMS } from './platforms';
 import { Player } from './player';
 import { createCollectibles, Collectible, DEFAULT_COLLECTIBLES } from './collectibles';
 import { createEnemies, Enemy, DEFAULT_ENEMIES } from './enemies';
 import { UIManager } from './ui-manager';
+
+// Camera follow configuration
+const CAMERA_CONFIG = {
+  // Horizontal bounds of the level
+  MIN_X: -20, // Extended left boundary of level
+  MAX_X: 20,  // Extended right boundary of level
+  
+  // Follow smoothness (lower = smoother)
+  FOLLOW_SPEED: 5,
+  
+  // Vertical offset (to adjust camera height)
+  VERTICAL_OFFSET: 0
+};
+
+// Define development mode interface
+interface GameOptions {
+  developmentMode?: boolean;
+}
 
 /**
  * Main game class that manages the game state and rendering
@@ -25,7 +43,13 @@ export class Game {
   private uiManager: UIManager;
   
   // Game state
-  private isPaused: boolean = false;
+  private isPaused: boolean = true; // Start paused by default
+  private isGameOver: boolean = false;
+  private developmentMode: boolean = false;
+  
+  // Camera boundaries and tracking
+  private minVisibleY: number = -GAME_CONFIG.HEIGHT / 2 - 1; // 1 unit below visible area
+  private targetCameraX: number = 0; // Target X position for camera
   
   // Time tracking for animation
   private lastTime: number = 0;
@@ -36,8 +60,12 @@ export class Game {
   /**
    * Initialize the game with the Three.js setup
    * @param container HTML element to attach the renderer to (defaults to document.body)
+   * @param options Game configuration options
    */
-  constructor(container: HTMLElement = document.body) {
+  constructor(container: HTMLElement = document.body, options: GameOptions = {}) {
+    // Set development mode
+    this.developmentMode = options.developmentMode || false;
+    
     // Create core Three.js components
     this.scene = createGameScene();
     this.camera = createGameCamera();
@@ -68,6 +96,17 @@ export class Game {
     
     // Add enemies to the scene
     this.enemies = createEnemies(this.scene, DEFAULT_ENEMIES);
+    
+    // In development mode, skip the main menu but remain paused
+    if (this.developmentMode) {
+      // Stay paused but don't show the main menu
+      this.uiManager.hideMainMenu(); // Explicitly hide the main menu
+      console.log('Game initialized in development mode (skipping start screen)');
+    } else {
+      // Show the main menu at start
+      this.uiManager.showMainMenu();
+      console.log('Game initialized in normal mode (showing start screen)');
+    }
   }
   
   /**
@@ -115,12 +154,15 @@ export class Game {
     window.addEventListener('keydown', (event) => {
       // 'P' key to toggle pause
       if (event.key === 'p' || event.key === 'P') {
-        this.togglePause();
+        // Only pause/unpause if the game is not in game over state
+        if (!this.isGameOver) {
+          this.togglePause();
+        }
         return;
       }
       
-      // Only register keys when game is not paused
-      if (!this.isPaused) {
+      // Only register keys when game is not paused and not game over
+      if (!this.isPaused && !this.isGameOver) {
         this.player.keys[event.key] = true;
       }
     });
@@ -134,7 +176,9 @@ export class Game {
     const pauseButton = document.getElementById('pause-button');
     if (pauseButton) {
       pauseButton.addEventListener('click', () => {
-        this.togglePause();
+        if (!this.isGameOver) {
+          this.togglePause();
+        }
       });
     }
     
@@ -146,9 +190,42 @@ export class Game {
         this.restartGame();
       });
     }
+    
+    // Setup start button
+    const startButton = document.getElementById('start-button');
+    if (startButton) {
+      startButton.addEventListener('click', () => {
+        this.startGame();
+      });
+    }
+    
+    // Setup the restart from game over button
+    const restartFromGameOverButton = document.getElementById('restart-from-game-over-button');
+    if (restartFromGameOverButton) {
+      restartFromGameOverButton.addEventListener('click', () => {
+        this.restartGame();
+      });
+    }
   }
   
-  // Removed startGame method
+  /**
+   * Start the game from the main menu
+   */
+  public startGame(): void {
+    // Hide main menu
+    this.uiManager.hideMainMenu();
+    
+    // Unpause the game
+    this.isPaused = false;
+    
+    // Reset state if needed
+    this.isGameOver = false;
+    
+    // Reset time to prevent large delta time
+    this.lastTime = performance.now();
+    
+    console.log('Game started from main menu');
+  }
   
   /**
    * Start the game initialization (public API)
@@ -158,7 +235,11 @@ export class Game {
     this.lastTime = performance.now();
     this.animate();
     
-    console.log('Game started directly');
+    if (this.developmentMode) {
+      console.log('Game animation loop started (development mode)');
+    } else {
+      console.log('Game animation loop started (normal mode - paused at start)');
+    }
   }
   
   /**
@@ -175,31 +256,30 @@ export class Game {
    * Toggle game pause state
    */
   public togglePause(): void {
+    // Don't toggle pause if in game over state
+    if (this.isGameOver) {
+      return;
+    }
+    
     this.isPaused = !this.isPaused;
     
-    // Get pause overlay and button
-    const pauseOverlay = document.getElementById('pause-overlay');
-    const pauseButton = document.getElementById('pause-button');
-    
     if (this.isPaused) {
-      // Show pause overlay
-      if (pauseOverlay) {
-        pauseOverlay.style.display = 'flex';
-      }
+      // Show pause overlay via UI manager
+      this.uiManager.showPauseOverlay();
       
       // Update pause button text
+      const pauseButton = document.getElementById('pause-button');
       if (pauseButton) {
         pauseButton.textContent = '▶️ Resume (P)';
       }
       
       console.log('Game paused');
     } else {
-      // Hide pause overlay
-      if (pauseOverlay) {
-        pauseOverlay.style.display = 'none';
-      }
+      // Hide pause overlay via UI manager
+      this.uiManager.hidePauseOverlay();
       
       // Update pause button text
+      const pauseButton = document.getElementById('pause-button');
       if (pauseButton) {
         pauseButton.textContent = '⏸️ Pause (P)';
       }
@@ -212,14 +292,71 @@ export class Game {
   }
   
   /**
+   * Update camera position to smoothly follow the player
+   * @param deltaTime Time since last frame in seconds
+   */
+  private updateCamera(deltaTime: number): void {
+    // Calculate target camera position based on player position
+    this.targetCameraX = this.player.position.x;
+    
+    // Clamp camera position within level boundaries
+    this.targetCameraX = Math.max(
+      CAMERA_CONFIG.MIN_X + GAME_CONFIG.WIDTH / 2, 
+      Math.min(
+        CAMERA_CONFIG.MAX_X - GAME_CONFIG.WIDTH / 2,
+        this.targetCameraX
+      )
+    );
+    
+    // Smoothly interpolate current camera position toward target position
+    const currentX = this.camera.position.x;
+    const newX = currentX + (this.targetCameraX - currentX) * Math.min(1, deltaTime * CAMERA_CONFIG.FOLLOW_SPEED);
+    
+    // Update camera position (only X axis, keep Y and Z unchanged)
+    this.camera.position.set(
+      newX,
+      this.camera.position.y + CAMERA_CONFIG.VERTICAL_OFFSET,
+      this.camera.position.z
+    );
+  }
+
+  /**
+   * Handle game over state
+   */
+  private handleGameOver(): void {
+    if (this.isGameOver) {
+      return; // Already in game over state
+    }
+    
+    console.log('Game over triggered!');
+    this.isGameOver = true;
+    
+    // Show game over overlay
+    this.uiManager.showGameOver();
+  }
+  
+  /**
    * Restart the game
    */
   public restartGame(): void {
     console.log('Restarting game...');
     
+    // Hide game over overlay if shown
+    this.uiManager.hideGameOver();
+    
+    // Reset game state
+    this.isGameOver = false;
+    
     // Reset pause state if paused
     if (this.isPaused) {
-      this.togglePause();
+      this.isPaused = false;
+      this.uiManager.hidePauseOverlay();
+      
+      // Update pause button text
+      const pauseButton = document.getElementById('pause-button');
+      if (pauseButton) {
+        pauseButton.textContent = '⏸️ Pause (P)';
+      }
     }
     
     // Reset score
@@ -245,6 +382,10 @@ export class Game {
     // Add enemies to scene
     this.enemies = createEnemies(this.scene, DEFAULT_ENEMIES);
     
+    // Reset camera position to focus on player's starting position
+    this.targetCameraX = this.player.position.x;
+    this.camera.position.x = this.targetCameraX;
+    
     // Reset time tracking
     this.lastTime = performance.now();
     
@@ -260,8 +401,8 @@ export class Game {
     // Always render the scene, even when paused
     this.renderer.render(this.scene, this.camera);
     
-    // If game is paused, don't update
-    if (this.isPaused) {
+    // If game is paused or game over, don't update
+    if (this.isPaused || this.isGameOver) {
       return;
     }
     
@@ -282,6 +423,9 @@ export class Game {
     this.player.update(cappedDeltaTime);
     this.player.checkPlatformCollisions(this.platforms);
     
+    // Update camera to follow player
+    this.updateCamera(cappedDeltaTime);
+    
     // Check collectible collisions
     const collectedItems = this.player.checkCollectibleCollisions(this.collectibles);
     if (collectedItems.length > 0) {
@@ -289,11 +433,14 @@ export class Game {
       console.log(`Collected items: ${collectedItems.length}. Total score: ${this.uiManager.getScore()}`);
     }
     
-    // Check enemy collisions
+    // Check enemy collisions (but don't end game on enemy collision)
     this.player.checkEnemyCollisions(this.enemies);
+    
+    // Check if player has fallen below the play area (game over condition)
+    if (this.player.checkFallOutOfBounds(this.minVisibleY)) {
+      this.handleGameOver();
+    }
   }
-  
-  // Comment removed
   
   /**
    * Clean up resources when game is destroyed
@@ -320,6 +467,20 @@ export class Game {
     const restartButton = document.getElementById('restart-button');
     if (restartButton) {
       restartButton.removeEventListener('dblclick', () => {
+        this.restartGame();
+      });
+    }
+    
+    const startButton = document.getElementById('start-button');
+    if (startButton) {
+      startButton.removeEventListener('click', () => {
+        this.startGame();
+      });
+    }
+    
+    const restartFromGameOverButton = document.getElementById('restart-from-game-over-button');
+    if (restartFromGameOverButton) {
+      restartFromGameOverButton.removeEventListener('click', () => {
         this.restartGame();
       });
     }

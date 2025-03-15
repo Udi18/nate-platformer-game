@@ -12,11 +12,27 @@ import { Game } from './game/game';
  * - Z-axis: depth for layering only (background to foreground)
  */
 
+/**
+ * Check for development mode query parameter (e.g., ?dev=true)
+ */
+function checkDevelopmentMode(): boolean {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get('dev') === 'true';
+}
+
 // Create a container for the game
 const gameContainer = document.getElementById('app') || document.body;
 
-// Initialize and start the game
-const game = new Game(gameContainer);
+// Check if we should enable development mode
+const developmentMode = checkDevelopmentMode();
+
+// Log development mode status
+if (developmentMode) {
+  console.log('Development mode enabled via URL parameter');
+}
+
+// Initialize and start the game with or without development mode
+const game = new Game(gameContainer, { developmentMode });
 game.start();
 
 // For debugging purposes - expose game to window (allows console access)
