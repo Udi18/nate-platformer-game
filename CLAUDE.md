@@ -10,7 +10,10 @@ The core gameplay involves a player character navigating platforms, collecting i
 - **Build**: `npm run build`
 - **Preview**: `npm run preview`
 - **Type check**: `npx tsc --noEmit`
-- **Run a specific test**: *No test framework configured*
+- **Run tests in watch mode**: `npm test`
+- **Run tests once**: `npm run test:run`
+- **Run specific tests**: `npm run test:run -- tests/level-generator.test.ts`
+- **Run tests with coverage**: `npm run test:run -- --coverage`
 
 ## Code Style
 - **TypeScript**: Strict mode with `noUnusedLocals` and `noUnusedParameters`
@@ -29,7 +32,24 @@ The core gameplay involves a player character navigating platforms, collecting i
 
 ## Project Structure
 - **src/**: TypeScript source files
+  - **main.ts**: Main entry point
+  - **game/**: Game components
+    - **game.ts**: Main game class
+    - **player.ts**: Player character implementation
+    - **platforms.ts**: Platform generation
+    - **enemies.ts**: Enemy behavior
+    - **collectibles.ts**: Collectible items
+    - **level-generator.ts**: Procedural level generation
+    - **ui-manager.ts**: UI management
+    - **scene.ts**: Three.js scene configuration
 - **public/**: Static assets
+- **tests/**: Test files
+  - **level-generator.test.ts**: Tests for procedural level generation
+  - **player.test.ts**: Tests for player movement and physics
+  - **game.test.ts**: Tests for main game orchestration
+  - **ui-manager.test.ts**: Tests for UI management
+  - **input-handling.test.ts**: Tests for keyboard and button inputs
+  - **setup.ts**: Test environment configuration
 
 ## Technical Objectives
 - Develop a scalable and maintainable game architecture
@@ -37,6 +57,7 @@ The core gameplay involves a player character navigating platforms, collecting i
 - Maintain simplicity in gameplay controls and interactions
 - Facilitate easy extension of characters, storylines, and media types
 - Implement intuitive, non-conflicting control schemes
+- Maintain test coverage for core functionality
 
 ## Development Guidelines
 
@@ -49,6 +70,10 @@ The core gameplay involves a player character navigating platforms, collecting i
   - Use modular architecture, clearly separated by function
   - Follow TypeScript best practices for type safety
   - Avoid deep nesting or overly abstract structures
+- **Testing**:
+  - Write tests for new functionality
+  - Ensure tests focus on behavior, not implementation details
+  - Keep tests maintainable and not overly brittle
 
 ### Three.js Best Practices
 - **Scene Management**:
@@ -86,6 +111,27 @@ The core gameplay involves a player character navigating platforms, collecting i
   - Document control schemes in UI elements
   - Avoid accidental triggering of important actions
   - Provide visual feedback for state changes (pause/resume)
+
+### Testing Guidelines
+- **Unit Tests**:
+  - Focus on testing one component at a time
+  - Mock dependencies to isolate functionality
+  - Use descriptive test names that explain the expected behavior
+- **Game Logic Testing**:
+  - Test core game mechanics separately from rendering
+  - Ensure procedural generation is consistent with given seeds
+  - Test collision detection and physics behaviors
+- **UI Testing**:
+  - Test UI state changes and event handling
+  - Verify UI elements respond correctly to game state
+
+### Refactoring Guidelines
+- **Remove redundant comments** that don't add value
+- **Keep essential docstrings** for public APIs and complex functions
+- **Use consistent naming** throughout the codebase
+- **Split large files** into smaller, focused modules when possible
+- **Reduce duplicate code** through appropriate abstraction
+- **Maintain test coverage** when refactoring
 
 ### AI Working Guidelines
 - **Code Simplicity**: Prioritize clarity over clever solutions
