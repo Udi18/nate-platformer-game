@@ -5,12 +5,13 @@ import { Player } from './player';
 import { createCollectibles, Collectible, DEFAULT_COLLECTIBLES } from './collectibles';
 import { createEnemies, Enemy, DEFAULT_ENEMIES } from './enemies';
 import { UIManager } from './ui-manager';
+import { generateLevel, DEFAULT_LEVEL_PARAMS } from './level-generator';
 
 // Camera follow configuration
 const CAMERA_CONFIG = {
   // Horizontal bounds of the level
-  MIN_X: -20, // Extended left boundary of level
-  MAX_X: 20,  // Extended right boundary of level
+  MIN_X: -40, // Extended left boundary for procedural level
+  MAX_X: 40,  // Extended right boundary for procedural level
   
   // Follow smoothness (lower = smoother)
   FOLLOW_SPEED: 5,
@@ -19,9 +20,10 @@ const CAMERA_CONFIG = {
   VERTICAL_OFFSET: 0
 };
 
-// Define development mode interface
+// Define game options interface
 interface GameOptions {
   developmentMode?: boolean;
+  useProceduralLevel?: boolean; // Option to use procedural level instead of defaults
 }
 
 /**
@@ -46,6 +48,10 @@ export class Game {
   private isPaused: boolean = true; // Start paused by default
   private isGameOver: boolean = false;
   private developmentMode: boolean = false;
+  private useProceduralLevel: boolean = false;
+  
+  // Level generation
+  private currentLevelSeed: number | undefined = undefined; // Store current level seed
   
   // Camera boundaries and tracking
   private minVisibleY: number = -GAME_CONFIG.HEIGHT / 2 - 1; // 1 unit below visible area
@@ -63,8 +69,9 @@ export class Game {
    * @param options Game configuration options
    */
   constructor(container: HTMLElement = document.body, options: GameOptions = {}) {
-    // Set development mode
+    // Set options
     this.developmentMode = options.developmentMode || false;
+    this.useProceduralLevel = options.useProceduralLevel || false;
     
     // Create core Three.js components
     this.scene = createGameScene();
@@ -85,6 +92,9 @@ export class Game {
     // Initialize UI managers
     this.uiManager = new UIManager();
     
+    // Create a new player
+    this.player = new Player();
+    
     // Setup game elements
     this.setupGameElements();
     
@@ -94,8 +104,10 @@ export class Game {
     // Add player to the scene
     this.scene.add(this.player.mesh);
     
-    // Add enemies to the scene
-    this.enemies = createEnemies(this.scene, DEFAULT_ENEMIES);
+    // Add enemies to the scene if not already added by procedural generator
+    if (!this.useProceduralLevel) {
+      this.enemies = createEnemies(this.scene, DEFAULT_ENEMIES);
+    }
     
     // In development mode, skip the main menu but remain paused
     if (this.developmentMode) {
@@ -113,17 +125,38 @@ export class Game {
    * Set up the initial game elements
    */
   private setupGameElements(): void {
-    // Add platforms to the scene
-    this.platforms = this.createPlatformsWithMeshes(DEFAULT_PLATFORMS);
-    
-    // Create and add collectibles
-    this.collectibles = createCollectibles(this.scene, DEFAULT_COLLECTIBLES);
-    
-    // Create player but don't add to scene yet
-    this.player = new Player();
-    
-    // Initialize enemies as empty array, they will be created when game starts
-    this.enemies = [];
+    if (this.useProceduralLevel) {
+      // Generate a procedural level with seed for consistency
+      console.log('Generating procedural level...');
+      
+      // For consistency on restart, keep using the same seed
+      const params = {...DEFAULT_LEVEL_PARAMS, seed: this.currentLevelSeed};
+      const level = generateLevel(params);
+      
+      // Save the seed for consistent regeneration
+      this.currentLevelSeed = level.seed;
+      
+      // Add platforms to the scene
+      this.platforms = this.createPlatformsWithMeshes(level.platforms);
+      
+      // Create and add collectibles
+      this.collectibles = createCollectibles(this.scene, level.collectibles);
+      
+      // Create enemies and add to the scene
+      this.enemies = createEnemies(this.scene, level.enemies);
+      
+      console.log(`Procedural level created with seed ${level.seed}, ${level.platforms.length} platforms, ${level.enemies.length} enemies, and ${level.collectibles.length} collectibles`);
+    } else {
+      // Use default level
+      // Add platforms to the scene
+      this.platforms = this.createPlatformsWithMeshes(DEFAULT_PLATFORMS);
+      
+      // Create and add collectibles
+      this.collectibles = createCollectibles(this.scene, DEFAULT_COLLECTIBLES);
+      
+      // Initialize enemies as empty array, they will be created when game starts
+      this.enemies = [];
+    }
   }
   
   /**
@@ -147,6 +180,7 @@ export class Game {
   private setupEventListeners(): void {
     // Handle window resize
     window.addEventListener('resize', () => {
+      // Make sure we use the current camera
       handleResize(this.camera, this.renderer);
     });
     
@@ -187,8 +221,18 @@ export class Game {
     if (restartButton) {
       restartButton.addEventListener('dblclick', () => {
         // Require a double-click to restart
-        this.restartGame();
+        this.restartGame(false); // Restart with same level
       });
+    }
+    
+    // Setup new level button if it exists
+    const newLevelButton = document.getElementById('new-level-button');
+    if (newLevelButton && this.useProceduralLevel) {
+      newLevelButton.addEventListener('click', () => {
+        this.generateNewLevel();
+      });
+      // Only show this button if procedural level is enabled
+      newLevelButton.style.display = 'inline-block';
     }
     
     // Setup start button
@@ -203,8 +247,18 @@ export class Game {
     const restartFromGameOverButton = document.getElementById('restart-from-game-over-button');
     if (restartFromGameOverButton) {
       restartFromGameOverButton.addEventListener('click', () => {
-        this.restartGame();
+        this.restartGame(false); // Restart with same level
       });
+    }
+    
+    // Setup the new level from game over button if it exists
+    const newLevelFromGameOverButton = document.getElementById('new-level-from-game-over-button');
+    if (newLevelFromGameOverButton && this.useProceduralLevel) {
+      newLevelFromGameOverButton.addEventListener('click', () => {
+        this.generateNewLevel();
+      });
+      // Only show if procedural level is enabled
+      newLevelFromGameOverButton.style.display = 'inline-block';
     }
   }
   
@@ -336,9 +390,131 @@ export class Game {
   }
   
   /**
-   * Restart the game
+   * Generate a new level with a different seed
+   * This is useful when the player wants a completely new level layout
    */
-  public restartGame(): void {
+  public generateNewLevel(): void {
+    console.log('Generating new level...');
+    
+    // Only applicable if using procedural level
+    if (!this.useProceduralLevel) return;
+    
+    // Clear the current seed to force generation of a new one
+    this.currentLevelSeed = undefined;
+    
+    // Perform a full restart with a new seed
+    this.restartGame(true);
+    
+    console.log('New level generated with seed:', this.currentLevelSeed);
+  }
+
+  /**
+   * Clean up game elements from the scene
+   * This must be thorough to prevent duplicated objects
+   */
+  private cleanupGameElements(): void {
+    // First, remove all meshes from the scene except the camera
+    // This ensures no game elements remain
+    while (this.scene.children.length > 0) {
+      const child = this.scene.children[0];
+      if (child !== this.camera) {
+        this.scene.remove(child);
+      } else {
+        // If it's the camera, move it to the end of the array
+        this.scene.remove(child);
+        this.scene.add(child);
+      }
+    }
+    
+    // Re-add camera if it was removed
+    if (!this.scene.children.includes(this.camera)) {
+      this.scene.add(this.camera);
+    }
+    
+    // Explicitly remove each game element to be thorough
+    // Remove existing player if it exists
+    if (this.player && this.player.mesh) {
+      this.scene.remove(this.player.mesh);
+      // Dispose of player mesh resources
+      if (this.player.mesh.geometry) this.player.mesh.geometry.dispose();
+      if (this.player.mesh.material) {
+        if (Array.isArray(this.player.mesh.material)) {
+          this.player.mesh.material.forEach(m => m.dispose());
+        } else {
+          this.player.mesh.material.dispose();
+        }
+      }
+      // Clear player references
+      this.player.keys = {}; // Clear any key states
+    }
+    
+    // Remove existing enemies
+    this.enemies.forEach(enemy => {
+      if (enemy.mesh) {
+        this.scene.remove(enemy.mesh);
+        // Dispose of geometries and materials to prevent memory leaks
+        if (enemy.mesh.geometry) enemy.mesh.geometry.dispose();
+        if (enemy.mesh.material) {
+          if (Array.isArray(enemy.mesh.material)) {
+            enemy.mesh.material.forEach(m => m.dispose());
+          } else {
+            enemy.mesh.material.dispose();
+          }
+        }
+      }
+    });
+    
+    // Remove existing collectibles
+    this.collectibles.forEach(collectible => {
+      if (collectible.mesh) {
+        this.scene.remove(collectible.mesh);
+        // Dispose of geometries and materials
+        if (collectible.mesh.geometry) collectible.mesh.geometry.dispose();
+        if (collectible.mesh.material) {
+          if (Array.isArray(collectible.mesh.material)) {
+            collectible.mesh.material.forEach(m => m.dispose());
+          } else {
+            collectible.mesh.material.dispose();
+          }
+        }
+      }
+    });
+    
+    // Remove existing platforms
+    this.platforms.forEach(platform => {
+      this.scene.remove(platform);
+      // Dispose of geometries and materials
+      if (platform.geometry) platform.geometry.dispose();
+      if (platform.material) {
+        if (Array.isArray(platform.material)) {
+          platform.material.forEach(m => m.dispose());
+        } else {
+          platform.material.dispose();
+        }
+      }
+    });
+    
+    // Clear arrays
+    this.enemies = [];
+    this.collectibles = [];
+    this.platforms = [];
+    
+    // Force a garbage collection hint (not guaranteed to run)
+    // This is just a hint and may not be available in all browsers
+    try {
+      if (window && (window as any).gc) {
+        (window as any).gc();
+      }
+    } catch (e) {
+      // Ignore errors with garbage collection
+    }
+  }
+
+  /**
+   * Restart the game
+   * @param generateNewLevel If true, generates a completely new level layout
+   */
+  public restartGame(generateNewLevel: boolean = false): void {
     console.log('Restarting game...');
     
     // Hide game over overlay if shown
@@ -362,34 +538,58 @@ export class Game {
     // Reset score
     this.uiManager.updateScore(0, false);
     
-    // Remove existing player and enemies from scene
-    this.scene.remove(this.player.mesh);
-    this.enemies.forEach(enemy => {
-      this.scene.remove(enemy.mesh);
-    });
+    // Clean up all existing scene elements
+    this.cleanupGameElements();
     
-    // Remove existing collectibles from scene
-    this.collectibles.forEach(collectible => {
-      this.scene.remove(collectible.mesh);
-    });
+    // If requested, clear the level seed to get a new level
+    if (generateNewLevel && this.useProceduralLevel) {
+      this.currentLevelSeed = undefined;
+    }
     
-    // Recreate game elements
+    // Recreate the scene from scratch to ensure full cleanup
+    this.scene = createGameScene();
+    
+    // Store the current camera to preserve its settings
+    const oldCamera = this.camera;
+    
+    // Create a new camera
+    this.camera = createGameCamera();
+    
+    // Copy position from old camera if it exists
+    if (oldCamera) {
+      this.camera.position.z = oldCamera.position.z;
+    }
+    
+    // Reset camera position
+    this.camera.position.x = 0;
+    this.camera.position.y = 0;
+    this.targetCameraX = 0;
+    
+    // Recreate game elements (using the same seed if not generating new level)
     this.setupGameElements();
+    
+    // Recreate the player from scratch with default position (important for reset)
+    this.player = new Player();
     
     // Add player to scene
     this.scene.add(this.player.mesh);
     
-    // Add enemies to scene
-    this.enemies = createEnemies(this.scene, DEFAULT_ENEMIES);
+    // Add enemies to scene if not using procedural level (otherwise they're already added)
+    if (!this.useProceduralLevel) {
+      this.enemies = createEnemies(this.scene, DEFAULT_ENEMIES);
+    }
     
     // Reset camera position to focus on player's starting position
     this.targetCameraX = this.player.position.x;
     this.camera.position.x = this.targetCameraX;
     
+    // Make sure the camera is being used by the renderer
+    this.renderer.render(this.scene, this.camera);
+    
     // Reset time tracking
     this.lastTime = performance.now();
     
-    console.log('Game restarted');
+    console.log('Game restarted with clean scene');
   }
   
   /**
@@ -467,7 +667,14 @@ export class Game {
     const restartButton = document.getElementById('restart-button');
     if (restartButton) {
       restartButton.removeEventListener('dblclick', () => {
-        this.restartGame();
+        this.restartGame(false);
+      });
+    }
+    
+    const newLevelButton = document.getElementById('new-level-button');
+    if (newLevelButton) {
+      newLevelButton.removeEventListener('click', () => {
+        this.generateNewLevel();
       });
     }
     
@@ -481,7 +688,14 @@ export class Game {
     const restartFromGameOverButton = document.getElementById('restart-from-game-over-button');
     if (restartFromGameOverButton) {
       restartFromGameOverButton.removeEventListener('click', () => {
-        this.restartGame();
+        this.restartGame(false);
+      });
+    }
+    
+    const newLevelFromGameOverButton = document.getElementById('new-level-from-game-over-button');
+    if (newLevelFromGameOverButton) {
+      newLevelFromGameOverButton.removeEventListener('click', () => {
+        this.generateNewLevel();
       });
     }
     

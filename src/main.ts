@@ -13,26 +13,37 @@ import { Game } from './game/game';
  */
 
 /**
- * Check for development mode query parameter (e.g., ?dev=true)
+ * Check for URL query parameters
+ * - dev=true: Enable development mode
+ * - procedural=true: Use procedural level generation
  */
-function checkDevelopmentMode(): boolean {
+function checkQueryParams(): { 
+  developmentMode: boolean;
+  useProceduralLevel: boolean;
+} {
   const urlParams = new URLSearchParams(window.location.search);
-  return urlParams.get('dev') === 'true';
+  return {
+    developmentMode: urlParams.get('dev') === 'true',
+    useProceduralLevel: urlParams.get('procedural') === 'true'
+  };
 }
 
 // Create a container for the game
 const gameContainer = document.getElementById('app') || document.body;
 
-// Check if we should enable development mode
-const developmentMode = checkDevelopmentMode();
+// Get game options from URL parameters
+const gameOptions = checkQueryParams();
 
-// Log development mode status
-if (developmentMode) {
+// Log enabled options
+if (gameOptions.developmentMode) {
   console.log('Development mode enabled via URL parameter');
 }
+if (gameOptions.useProceduralLevel) {
+  console.log('Procedural level generation enabled via URL parameter');
+}
 
-// Initialize and start the game with or without development mode
-const game = new Game(gameContainer, { developmentMode });
+// Initialize and start the game with options
+const game = new Game(gameContainer, gameOptions);
 game.start();
 
 // For debugging purposes - expose game to window (allows console access)
