@@ -1,38 +1,25 @@
-import * as THREE from 'three';
+import './style.css';
+import { Game } from './game/game';
 
-// Scene Setup
-const scene = new THREE.Scene();
-const camera = new THREE.OrthographicCamera(
-  window.innerWidth / -2, window.innerWidth / 2,
-  window.innerHeight / 2, window.innerHeight / -2,
-  0.1, 1000
-);
-camera.position.z = 10;
+/**
+ * Main entry point for the game
+ * 
+ * Initializes the game container and starts the game loop.
+ * The game uses an orthographic camera (2D view) with a clearly defined
+ * coordinate system:
+ * - X-axis: horizontal movement (left to right)
+ * - Y-axis: vertical movement (bottom to top)
+ * - Z-axis: depth for layering only (background to foreground)
+ */
 
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setSize(window.innerWidth, window.innerHeight);
-document.body.appendChild(renderer.domElement);
+// Create a container for the game
+const gameContainer = document.getElementById('app') || document.body;
 
-// Add a simple square
-const geometry = new THREE.PlaneGeometry(100, 100);
-const material = new THREE.MeshBasicMaterial({ color: 0x0077ff });
-const square = new THREE.Mesh(geometry, material);
-scene.add(square);
+// Initialize and start the game
+const game = new Game(gameContainer);
+game.start();
 
-// Render loop
-function animate() {
-  requestAnimationFrame(animate);
-  square.rotation.z += 0.01;
-  renderer.render(scene, camera);
+// For debugging purposes - expose game to window (allows console access)
+if (import.meta.env.DEV) {
+  (window as any).game = game;
 }
-animate();
-
-// Handle resize
-window.addEventListener('resize', () => {
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  camera.left = window.innerWidth / -2;
-  camera.right = window.innerWidth / 2;
-  camera.top = window.innerHeight / 2;
-  camera.bottom = window.innerHeight / -2;
-  camera.updateProjectionMatrix();
-});
