@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { createGameScene, createGameCamera, handleResize } from './scene';
-import { createPlatforms } from './platforms';
+import { createPlatforms, PlatformDefinition, DEFAULT_PLATFORMS } from './platforms';
+import { Player } from './player';
 
 /**
  * Main game class that manages the game state and rendering
@@ -10,6 +11,13 @@ export class Game {
   private scene: THREE.Scene;
   private camera: THREE.OrthographicCamera;
   private renderer: THREE.WebGLRenderer;
+  
+  // Game elements
+  private player!: Player; // Will be initialized in setupGameElements
+  private platforms: THREE.Mesh[] = [];
+  
+  // Time tracking for animation
+  private lastTime: number = 0;
   
   // Animation frame ID for cleanup
   private animationFrameId: number | null = null;
@@ -47,15 +55,44 @@ export class Game {
    */
   private setupGameElements(): void {
     // Add platforms to the scene
-    createPlatforms(this.scene);
+    this.platforms = this.createPlatformsWithMeshes(DEFAULT_PLATFORMS);
+    
+    // Create and add player
+    this.player = new Player();
+    this.scene.add(this.player.mesh);
+  }
+  
+  /**
+   * Create platforms and return their meshes for collision detection
+   */
+  private createPlatformsWithMeshes(platformDefinitions: PlatformDefinition[]): THREE.Mesh[] {
+    const platformMeshes: THREE.Mesh[] = [];
+    
+    platformDefinitions.forEach(platformDef => {
+      const platform = createPlatforms(this.scene, [platformDef]);
+      // Track the mesh for collision detection
+      platformMeshes.push(platform[0]);
+    });
+    
+    return platformMeshes;
   }
   
   /**
    * Set up window event listeners
    */
   private setupEventListeners(): void {
+    // Handle window resize
     window.addEventListener('resize', () => {
       handleResize(this.camera, this.renderer);
+    });
+    
+    // Handle keyboard input for player movement
+    window.addEventListener('keydown', (event) => {
+      this.player.keys[event.key] = true;
+    });
+    
+    window.addEventListener('keyup', (event) => {
+      this.player.keys[event.key] = false;
     });
   }
   
@@ -67,6 +104,7 @@ export class Game {
       return; // Already running
     }
     
+    this.lastTime = performance.now();
     this.animate();
   }
   
@@ -83,10 +121,21 @@ export class Game {
   /**
    * Animation loop
    */
-  private animate = (): void => {
+  private animate = (time: number = 0): void => {
     this.animationFrameId = requestAnimationFrame(this.animate);
     
-    // Update game logic here (will be expanded later)
+    // Calculate delta time in seconds
+    const deltaTime = (time - this.lastTime) / 1000;
+    this.lastTime = time;
+    
+    // Limit delta time to prevent large jumps after tab switching
+    const cappedDeltaTime = Math.min(deltaTime, 0.1);
+    
+    // Update player
+    this.player.update(cappedDeltaTime);
+    
+    // Check collisions
+    this.player.checkPlatformCollisions(this.platforms);
     
     // Render the scene
     this.renderer.render(this.scene, this.camera);
@@ -102,6 +151,9 @@ export class Game {
     window.removeEventListener('resize', () => {
       handleResize(this.camera, this.renderer);
     });
+    
+    window.removeEventListener('keydown', () => {});
+    window.removeEventListener('keyup', () => {});
     
     // Remove renderer from DOM
     if (this.renderer.domElement.parentNode) {

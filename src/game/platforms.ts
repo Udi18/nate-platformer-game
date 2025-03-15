@@ -35,7 +35,7 @@ export const DEFAULT_PLATFORMS: PlatformDefinition[] = [
     height: 0.5,
     position: {
       x: -2,
-      y: 0
+      y: -2
     },
     color: 0x8B4513
   },
@@ -84,13 +84,19 @@ export function createPlatform(platform: PlatformDefinition): THREE.Mesh {
  * Creates all platforms and adds them to the scene
  * @param scene The scene to add platforms to
  * @param platformDefinitions Array of platform definitions (optional)
+ * @returns Array of created platform meshes
  */
 export function createPlatforms(
   scene: THREE.Scene,
   platformDefinitions: PlatformDefinition[] = DEFAULT_PLATFORMS
-): void {
+): THREE.Mesh[] {
+  const platforms: THREE.Mesh[] = [];
+  
   platformDefinitions.forEach(platformDef => {
     const platform = createPlatform(platformDef);
     scene.add(platform);
+    platforms.push(platform);
   });
+  
+  return platforms;
 }
