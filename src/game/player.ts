@@ -108,10 +108,15 @@ export class Player {
       this.velocity.x = this.speed;
     }
     
-    // Apply jump if on ground
-    if ((this.keys['ArrowUp'] || this.keys[' '] || this.keys['w'] || this.keys['W']) && this.isGrounded) {
+    // Apply jump if on ground and a jump key is pressed
+    const jumpKeyPressed = this.keys['ArrowUp'] || this.keys[' '] || this.keys['w'] || this.keys['W'];
+    
+    if (jumpKeyPressed && this.isGrounded) {
       this.velocity.y = this.jumpForce;
       this.isGrounded = false;
+      
+      // Clear the space key immediately after jumping to prevent it from being "held down" between state transitions
+      this.keys[' '] = false;
     }
     
     // Apply gravity

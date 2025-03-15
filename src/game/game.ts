@@ -119,6 +119,12 @@ export class Game {
     });
     
     window.addEventListener('keydown', (event) => {
+      // Prevent default behavior for game control keys to avoid page scrolling
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(event.key)) {
+        event.preventDefault();
+      }
+      
+      // Handle pause key
       if (event.key === 'p' || event.key === 'P') {
         if (!this.isGameOver) {
           this.togglePause();
@@ -126,13 +132,20 @@ export class Game {
         return;
       }
       
+      // Only register other keys when game is active
       if (!this.isPaused && !this.isGameOver) {
-        this.player.keys[event.key] = true;
+        // Ensure we're not in a transition state (like after restart)
+        if (this.player && this.player.keys) {
+          this.player.keys[event.key] = true;
+        }
       }
     });
     
     window.addEventListener('keyup', (event) => {
-      this.player.keys[event.key] = false;
+      // Ensure player and keys object exist
+      if (this.player && this.player.keys) {
+        this.player.keys[event.key] = false;
+      }
     });
     
     const pauseButton = document.getElementById('pause-button');
@@ -275,6 +288,11 @@ export class Game {
     
     if (!this.useProceduralLevel) return;
     
+    // Clear any held keys first to prevent inputs being carried over
+    if (this.player) {
+      this.player.keys = {};
+    }
+    
     this.currentLevelSeed = undefined;
     this.restartGame(true);
     
@@ -400,6 +418,10 @@ export class Game {
     
     this.setupGameElements();
     this.player = new Player();
+    
+    // Ensure all keys are reset to prevent any keys from previous game state from affecting this one
+    this.player.keys = {};
+    
     this.scene.add(this.player.mesh);
     
     if (!this.useProceduralLevel) {
