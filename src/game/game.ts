@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { createGameScene, createGameCamera, handleResize, GAME_CONFIG } from './scene';
 import { createPlatforms, PlatformDefinition, DEFAULT_PLATFORMS } from './platforms';
-import { Player } from './player';
+import { Player, DEFAULT_PLAYER } from './player';
 import { createCollectibles, Collectible, DEFAULT_COLLECTIBLES } from './collectibles';
 import { createEnemies, Enemy, DEFAULT_ENEMIES } from './enemies';
 import { UIManager } from './ui-manager';
@@ -17,6 +17,7 @@ const CAMERA_CONFIG = {
 interface GameOptions {
   developmentMode?: boolean;
   useProceduralLevel?: boolean;
+  playerColor?: string;
 }
 
 export class Game {
@@ -62,7 +63,7 @@ export class Game {
     this.renderer.domElement.style.display = 'block';
     
     this.uiManager = new UIManager();
-    this.player = new Player();
+    this.player = new Player(DEFAULT_PLAYER, options.playerColor);
     
     this.setupGameElements();
     this.setupEventListeners();
@@ -417,7 +418,10 @@ export class Game {
     this.targetCameraX = 0;
     
     this.setupGameElements();
-    this.player = new Player();
+    // Fix potential restart bug by passing the URL parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const playerColor = urlParams.get('player') || (window as any).gameOptions?.playerColor;
+    this.player = new Player(DEFAULT_PLAYER, playerColor);
     
     // Ensure all keys are reset to prevent any keys from previous game state from affecting this one
     this.player.keys = {};

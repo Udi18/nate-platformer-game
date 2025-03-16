@@ -5,12 +5,29 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Nate's Adventure</title>
-  <style>
-    #theme-selector {
+    <style>
+    #settings-panel {
       position: fixed;
-      top: 10px;
-      right: 310px;
-      z-index: 200;
+      top: 70px;
+      left: 10px;
+      z-index: 1001;
+      background-color: var(--ui-background);
+      color: var(--ui-text);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 5px;
+      padding: 10px 15px;
+      font-size: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-width: 300px;
+    }
+
+    #settings-toggle {
+      position: fixed;
+      top: 70px;
+      left: 10px;
+      z-index: 1000;
       background-color: var(--ui-background);
       color: var(--ui-text);
       border: 2px solid rgba(255, 255, 255, 0.3);
@@ -18,16 +35,100 @@
       padding: 8px 12px;
       font-size: 1rem;
       cursor: pointer;
+      opacity: 0.9;
     }
-    #theme-selector:hover {
+
+    .settings-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .settings-row label {
+      flex: 1;
+    }
+
+    .settings-row select, .settings-row input {
+      flex: 1;
+      background-color: var(--ui-background);
+      color: var(--ui-text);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 4px;
+      padding: 4px 8px;
+    }
+
+    #settings-toggle:hover, .settings-apply:hover {
       background-color: rgba(0, 0, 0, 0.9);
       border-color: rgba(255, 255, 255, 0.5);
       transform: scale(1.05);
+    }
+
+    .settings-apply {
+      background-color: var(--ui-accent);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 6px 12px;
+      cursor: pointer;
+      margin-top: 5px;
     }
   </style>
   </head>
   <body>
     <div id="app"></div>
+    
+    <!-- Settings Panel -->
+    <button id="settings-toggle">⚙️ Settings</button>
+    <div id="settings-panel" style="display: none;">
+      <h3 style="margin-top: 0; margin-bottom: 10px;">Game Settings</h3>
+      
+      <div class="settings-row">
+        <label for="settings-theme">Theme:</label>
+        <select id="settings-theme">
+          <option value="classic">Classic</option>
+          <option value="dark">Dark</option>
+          <option value="forest">Forest</option>
+          <option value="sunset">Sunset</option>
+          <option value="lava">Lava</option>
+        </select>
+      </div>
+      
+      <div class="settings-row">
+        <label for="settings-player-color">Player Color:</label>
+        <select id="settings-player-color">
+          <option value="orange">Orange</option>
+          <option value="blue">Blue</option>
+          <option value="green">Green</option>
+          <option value="purple">Purple</option>
+          <option value="teal">Teal</option>
+          <option value="red">Red</option>
+        </select>
+      </div>
+      
+      <div class="settings-row">
+        <label for="settings-dev-mode">Dev Mode:</label>
+        <select id="settings-dev-mode">
+          <option value="false">Off</option>
+          <option value="true">On</option>
+        </select>
+      </div>
+      
+      <div class="settings-row">
+        <label for="settings-procedural">Procedural Levels:</label>
+        <select id="settings-procedural">
+          <option value="false">Off</option>
+          <option value="true">On</option>
+        </select>
+      </div>
+      
+      <button class="settings-apply" id="settings-apply">Apply Settings</button>
+      
+      <div style="margin-top: 10px; font-size: 0.85rem;">
+        <p style="margin: 5px 0;">Settings are applied via URL parameters:</p>
+        <code>?theme=dark&player=red&dev=true&procedural=true</code>
+      </div>
+    </div>
     
     <!-- Game UI Elements -->
     <div id="hud">
@@ -37,13 +138,6 @@
       </div>
       
       <div id="controls-container">
-        <select id="theme-selector" title="Change theme">
-          <option value="classic">Classic Theme</option>
-          <option value="dark">Dark Theme</option>
-          <option value="forest">Forest Theme</option>
-          <option value="sunset">Sunset Theme</option>
-          <option value="lava">Lava Theme</option>
-        </select>
         <button id="pause-button">⏸️ Pause (P)</button>
         <button id="restart-button" title="Double-click to restart">🔄 Restart</button>
         <button id="new-level-button" style="display:none;">🎲 New Level</button>

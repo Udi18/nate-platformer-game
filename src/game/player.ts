@@ -61,7 +61,7 @@ export class Player {
   /**
    * Create a new player with given configuration
    */
-  constructor(config = DEFAULT_PLAYER) {
+  constructor(config = DEFAULT_PLAYER, playerColorName?: string) {
     this.width = config.width;
     this.height = config.height;
     this.position = { ...config.position };
@@ -72,10 +72,40 @@ export class Player {
     this.jumpForce = config.jumpForce;
     this.gravity = config.gravity;
     
+    // Determine player color
+    let playerColor: number;
+    
+    if (playerColorName) {
+      // Map color name to PlayerColor enum
+      switch (playerColorName.toLowerCase()) {
+        case 'blue':
+          playerColor = PlayerColor.BLUE;
+          break;
+        case 'green':
+          playerColor = PlayerColor.GREEN;
+          break;
+        case 'purple':
+          playerColor = PlayerColor.PURPLE;
+          break;
+        case 'teal':
+          playerColor = PlayerColor.TEAL;
+          break;
+        case 'red':
+          playerColor = PlayerColor.RED;
+          break;
+        case 'orange':
+        default:
+          playerColor = PlayerColor.ORANGE;
+      }
+    } else {
+      // Use theme's default player color
+      playerColor = getCurrentTheme().player;
+    }
+    
     // Create mesh
     const geometry = new THREE.PlaneGeometry(this.width, this.height);
     const material = new THREE.MeshBasicMaterial({ 
-      color: config.color || getCurrentTheme().player, 
+      color: playerColor, 
       side: THREE.DoubleSide 
     });
     
