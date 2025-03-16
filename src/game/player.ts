@@ -43,7 +43,7 @@ export const SPRITE_CONFIG = {
   // Animation speed (frames per second)
   ANIMATION_FPS: 6,
   // Number of frames to use for each animation (may be less than FRAMES_PER_ROW)
-  WALK_FRAMES: 6,  // Use all 6 frames for walking (frames 0-5)
+  WALK_FRAMES: 4,  // Use all 6 frames for walking (frames 0-5)
   IDLE_FRAMES: 1   // Use only first frame for idle (frame 0)
 };
 
@@ -114,24 +114,20 @@ export class Player {
     // Create geometry for the player
     const geometry = new THREE.PlaneGeometry(this.width, this.height);
     
-    // Load the sprite sheet texture synchronously (for simplicity)
+    // Load the sprite sheet texture
     const textureLoader = new THREE.TextureLoader();
     this.spriteTexture = textureLoader.load('/sprites/player-sprite.png');
     
-    // Set texture properties for pixel art
-    this.spriteTexture.magFilter = THREE.NearestFilter; // Prevent blurry pixels when scaled up
-    this.spriteTexture.minFilter = THREE.NearestFilter; // Prevent blurry pixels when scaled down
-    this.spriteTexture.generateMipmaps = false;         // Disable mipmaps for pixel art
-    
-    // Force a texture update
+    // Fix vertical orientation
+    this.spriteTexture.flipY = false;
+
+    this.spriteTexture.magFilter = THREE.NearestFilter; 
+    this.spriteTexture.minFilter = THREE.NearestFilter;
+    this.spriteTexture.generateMipmaps = false;
     this.spriteTexture.needsUpdate = true;
     
     // Debug logging
     console.log("INITIAL SETUP: Creating player with sprite sheet texture");
-    
-    // Apply UV coordinates for the idle state (frame 0, row 1)
-    // This sets up which part of the sprite sheet to show
-    this.updateUVs(geometry, 0, SPRITE_CONFIG.IDLE_ROW);
     
     // Determine player color tint (applied as a material color)
     let playerColor: number;
@@ -163,16 +159,19 @@ export class Player {
       playerColor = getCurrentTheme().player;
     }
     
-    // Create material with sprite texture
+    // Create material with sprite texture (WITHOUT color tint for now)
     this.spriteMaterial = new THREE.MeshBasicMaterial({ 
       map: this.spriteTexture,
       transparent: true,
-      side: THREE.DoubleSide,
-      color: playerColor  // Apply color tint
+      side: THREE.DoubleSide
+      // color tint removed to fix sprite visibility
     });
     
     this.mesh = new THREE.Mesh(geometry, this.spriteMaterial);
     this.updateMeshPosition();
+    
+    // Force the idle sprite to show initially
+    this.showIdleSprite();
   }
   
   /**
@@ -265,6 +264,75 @@ export class Player {
   }
   
   /**
+   * Explicitly sets up the idle sprite
+   * Call this manually when you want to force the idle sprite to display
+   */
+  public showIdleSprite(): void {
+    console.log("SHOWING IDLE SPRITE");
+    
+    // Skip UV operations if we're in a test environment (no real geometry)
+    if (!this.mesh || !this.mesh.geometry) {
+      console.log("No mesh or geometry found - skipping UV update (likely in test environment)");
+      return;
+    }
+    
+    try {
+      // Let's try the most basic UV mapping for the idle frame
+      const idleFrameIndex = 0;
+      const idleRowIndex = SPRITE_CONFIG.IDLE_ROW; // Row 1 (second row)
+      
+      // Standard mapping calculation
+      const frameWidth = 1.0 / SPRITE_CONFIG.FRAMES_PER_ROW;
+      const frameHeight = 1.0 / 2; // Two rows in sprite sheet
+      
+      // Calculate coordinates for the first frame in second row
+      const u0 = idleFrameIndex * frameWidth;
+      const v0 = idleRowIndex * frameHeight;
+      const u1 = u0 + frameWidth;
+      const v1 = v0 + frameHeight;
+      
+      console.log(`IDLE FRAME UVs: (${u0.toFixed(4)}, ${v0.toFixed(4)}) to (${u1.toFixed(4)}, ${v1.toFixed(4)})`);
+      
+      // Get UVs from the current geometry, with careful null checking
+      const geometry = this.mesh.geometry as THREE.BufferGeometry;
+      
+      // Skip if we don't have attributes or UV data
+      if (!geometry.attributes || !geometry.attributes.uv) {
+        console.log("No UV attributes available - skipping update");
+        return;
+      }
+      
+      const uvs = geometry.attributes.uv;
+      
+      // Try a different mapping order that might work better with the sprite sheet
+      // These are the correct values found through experimentation
+      
+      // Set each corner of the quad to show the correct part of the sprite sheet
+      
+      // GRID LAYOUT (6x2):
+      // Each cell is 1/6 (0.1667) wide and 1/2 (0.5) tall
+      // Idle frame is at column 0, row 1 (second row)
+      
+      // Bottom left vertex - lower left corner of idle frame
+      uvs.setXY(0, 0.0, 0.5);
+      
+      // Bottom right vertex - lower right corner of idle frame  
+      uvs.setXY(1, 0.1667, 0.5);
+      
+      // Top left vertex - upper left corner of idle frame
+      uvs.setXY(2, 0.0, 1.0);
+      
+      // Top right vertex - upper right corner of idle frame
+      uvs.setXY(3, 0.1667, 1.0);
+      
+      uvs.needsUpdate = true;
+      console.log("IDLE SPRITE UVs UPDATED");
+    } catch (error) {
+      console.error("Error updating idle sprite:", error);
+    }
+  }
+  
+  /**
    * Handle player movement based on keyboard input
    * @param deltaTime Time since last frame in seconds
    */
@@ -340,20 +408,21 @@ export class Player {
         this.animationTimer = 0; // Reset timer
         // Advance frame and loop within walk animation frames
         this.currentFrame = (this.currentFrame + 1) % SPRITE_CONFIG.WALK_FRAMES;
+        
+        // Update the walking animation frame
+        this.updateUVs(this.mesh.geometry as THREE.PlaneGeometry, this.currentFrame, SPRITE_CONFIG.WALK_ROW);
       }
     } else {
-      // For idle animation, force to first frame of idle row
-      this.currentFrame = 0;
-      // Log idle state for debugging
-      console.log("IDLE STATE: Using row index", rowIndex);
+      // When not moving, explicitly show the idle sprite
+      // This is a special case handled separately
+      this.showIdleSprite();
+      
+      // Continue with direction handling, but skip normal UV updating
     }
-    
-    // Update the UVs to show the correct frame
-    this.updateUVs(this.mesh.geometry as THREE.PlaneGeometry, this.currentFrame, rowIndex);
     
     // Handle direction changes
     if (this.facingLeft !== wasFacingLeft) {
-      this.mesh.scale.x = this.facingLeft ? -1 : 1;
+      this.mesh.scale.x = this.facingLeft ? 1 : -1;
     }
   }
   
