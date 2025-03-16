@@ -110,9 +110,6 @@ export class Player {
     this.jumpForce = config.jumpForce;
     this.gravity = config.gravity;
     
-    // Debug sprite configuration
-    console.log("SPRITE CONFIG:", JSON.stringify(SPRITE_CONFIG, null, 2));
-    
     // Create geometry for the player
     const geometry = new THREE.PlaneGeometry(this.width, this.height);
     
@@ -127,9 +124,6 @@ export class Player {
     this.spriteTexture.minFilter = THREE.NearestFilter;
     this.spriteTexture.generateMipmaps = false;
     this.spriteTexture.needsUpdate = true;
-    
-    // Debug logging
-    console.log("INITIAL SETUP: Creating player with sprite sheet texture");
     
     // Determine player color tint (applied as a material color)
     let playerColor: number;
@@ -180,14 +174,13 @@ export class Player {
    * Update UV coordinates of the geometry to show the specific frame
    * @param geometry The geometry to update
    * @param frameIndex The frame index (0-5)
-   * @param rowIndex The row index (0 for walking, 1 for idle)
    */
-  private updateUVs(geometry: THREE.PlaneGeometry, frameIndex: number, rowIndex: number): void {
+  private updateUVs(geometry: THREE.PlaneGeometry, frameIndex: number): void {
     // Ensure frame indices are within bounds
-    if (rowIndex === SPRITE_CONFIG.IDLE_ROW) {
+    if (frameIndex === SPRITE_CONFIG.IDLE_ROW) {
       // Always use first frame for idle
       frameIndex = 0;  
-    } else if (rowIndex === SPRITE_CONFIG.WALK_ROW) {
+    } else if (frameIndex === SPRITE_CONFIG.WALK_ROW) {
       // Keep walking animation frames in bounds
       frameIndex = frameIndex % SPRITE_CONFIG.WALK_FRAMES; 
     }
@@ -204,7 +197,6 @@ export class Player {
     
     // Calculate frame size as fraction of the full texture
     const frameWidth = 1.0 / FRAMES_HORIZONTAL;
-    const frameHeight = 1.0 / FRAMES_VERTICAL;
     
     // Calculate UV coordinates for the current frame
     // CORRECTED: In UV space, v=0 is the BOTTOM of the texture
@@ -214,7 +206,7 @@ export class Player {
     // FIXED: For Row 0 (walking animation, TOP row), v coordinates should be (0.5, 1.0)
     // For Row 1 (idle animation, BOTTOM row), v coordinates should be (0.0, 0.5)
     let v0, v1;
-    if (rowIndex === SPRITE_CONFIG.WALK_ROW) { // TOP row (walking)
+    if (frameIndex === SPRITE_CONFIG.WALK_ROW) { // TOP row (walking)
       v0 = 0.5;  // Start 50% down from top
       v1 = 1.0;  // End at bottom of texture
     } else { // BOTTOM row (idle)
@@ -222,7 +214,7 @@ export class Player {
       v1 = 0.5;  // End 50% down from top
     }
     
-    console.log(`Setting UVs for frame: ${frameIndex} in row: ${rowIndex}`);
+    console.log(`Setting UVs for frame: ${frameIndex}`);
     console.log(`FIXED UV coordinates: (${u0.toFixed(4)}, ${v0.toFixed(4)}) to (${u1.toFixed(4)}, ${v1.toFixed(4)})`);
     
     // Skip if geometry has no UV attribute
@@ -251,6 +243,8 @@ export class Player {
         uvs.setXY(3, u1, v1);
       }
       
+      // Mark UVs as needing an update
+      uvs.needsUpdate = true;
       // Mark UVs as needing an update
       uvs.needsUpdate = true;
       
