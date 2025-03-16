@@ -32,7 +32,8 @@ export class Game {
   
   private uiManager: UIManager;
   
-  private isPaused: boolean = true;
+  private isStarted: boolean = false
+  private isPaused: boolean = false;
   private isGameOver: boolean = false;
   private developmentMode: boolean = false;
   private useProceduralLevel: boolean = false;
@@ -76,6 +77,7 @@ export class Game {
     
     if (this.developmentMode) {
       this.uiManager.hideMainMenu();
+      this.isStarted = true;
       console.log('Game initialized in development mode (skipping start screen)');
     } else {
       this.uiManager.showMainMenu();
@@ -160,7 +162,7 @@ export class Game {
     
     const restartButton = document.getElementById('restart-button');
     if (restartButton) {
-      restartButton.addEventListener('dblclick', () => {
+      restartButton.addEventListener('click', () => {
         this.restartGame(false);
       });
     }
@@ -198,6 +200,7 @@ export class Game {
   
   public startGame(): void {
     this.uiManager.hideMainMenu();
+    this.isStarted = true;
     this.isPaused = false;
     this.isGameOver = false;
     this.lastTime = performance.now();
@@ -224,7 +227,7 @@ export class Game {
   }
   
   public togglePause(): void {
-    if (this.isGameOver) {
+    if (this.isGameOver || !this.isStarted) {
       return;
     }
     
@@ -447,7 +450,7 @@ export class Game {
     
     this.renderer.render(this.scene, this.camera);
     
-    if (this.isPaused || this.isGameOver) {
+    if (this.isPaused || this.isGameOver || !this.isStarted) {
       return;
     }
     

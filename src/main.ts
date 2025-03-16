@@ -9,6 +9,8 @@ interface GameOptions {
   playerColor?: string;
 }
 
+type Maybe<T> = T | null;
+
 function checkQueryParams(): GameOptions {
   const urlParams = new URLSearchParams(window.location.search);
   return {
@@ -45,15 +47,13 @@ if (gameOptions.theme) {
 
 const game = new Game(gameContainer, gameOptions);
 
-// We removed the separate theme selector and now only use the one in the settings panel
-
 // Set up settings panel
 const settingsToggle = document.getElementById('settings-toggle');
 const settingsPanel = document.getElementById('settings-panel');
-const settingsTheme = document.getElementById('settings-theme') as HTMLSelectElement;
-const settingsPlayerColor = document.getElementById('settings-player-color') as HTMLSelectElement;
-const settingsDevMode = document.getElementById('settings-dev-mode') as HTMLSelectElement;
-const settingsProcedural = document.getElementById('settings-procedural') as HTMLSelectElement;
+const settingsTheme = document.getElementById('settings-theme') as Maybe<HTMLSelectElement>;
+const settingsPlayerColor = document.getElementById('settings-player-color') as Maybe<HTMLSelectElement>;
+const settingsDevMode = document.getElementById('settings-dev-mode') as Maybe<HTMLSelectElement>;
+const settingsProcedural = document.getElementById('settings-procedural') as Maybe<HTMLSelectElement>;
 const settingsApply = document.getElementById('settings-apply');
 
 // Initialize settings values from URL params
@@ -61,22 +61,6 @@ if (settingsTheme) {
   if (gameOptions.theme) {
     settingsTheme.value = gameOptions.theme;
   }
-  
-  // Add change listener to update theme without page reload
-  settingsTheme.addEventListener('change', () => {
-    const selectedTheme = settingsTheme.value;
-    setTheme(selectedTheme);
-    // Apply the theme to UI elements immediately
-    applyThemeToUI();
-    
-    // Update the URL parameter without reloading the page
-    const url = new URL(window.location.href);
-    url.searchParams.set('theme', selectedTheme);
-    window.history.replaceState({}, '', url.toString());
-    
-    // Restart the game to apply the new theme
-    game.restartGame(false);
-  });
 }
 
 if (settingsPlayerColor) {
