@@ -43,7 +43,7 @@ export const SPRITE_CONFIG = {
   // Animation speed (frames per second)
   ANIMATION_FPS: 6,
   // Number of frames to use for each animation (may be less than FRAMES_PER_ROW)
-  WALK_FRAMES: 4,  // Use all 6 frames for walking (frames 0-5)
+  WALK_FRAMES: 6,  // Use all 6 frames for walking (frames 0-5)
   IDLE_FRAMES: 1   // Use only first frame for idle (frame 0)
 };
 
@@ -181,7 +181,7 @@ export class Player {
    * @param rowIndex The row index (0 for walking, 1 for idle)
    */
   private updateUVs(geometry: THREE.PlaneGeometry, frameIndex: number, rowIndex: number): void {
-    // Hard limit frame indices to avoid errors
+    // Ensure frame indices are within bounds
     if (rowIndex === SPRITE_CONFIG.IDLE_ROW) {
       // Always use first frame for idle
       frameIndex = 0;  
@@ -190,22 +190,38 @@ export class Player {
       frameIndex = frameIndex % SPRITE_CONFIG.WALK_FRAMES; 
     }
     
+    // IMPORTANT: Fix for sprite sheet orientation
+    // In our sprite sheet:
+    // - Row 0 (TOP row) has the walking animation frames
+    // - Row 1 (BOTTOM row) has the idle animation frame
+    // - But in THREE.js UV space, v=0 is bottom and v=1 is top, so we need to flip
+    
     // Fixed constants for sprite sheet layout
     const FRAMES_HORIZONTAL = 6;   // 6 frames across
     const FRAMES_VERTICAL = 2;     // 2 rows (walk + idle)
     
-    // Calculate frame size as fraction of the full texture (in UV space 0-1)
+    // Calculate frame size as fraction of the full texture
     const frameWidth = 1.0 / FRAMES_HORIZONTAL;
     const frameHeight = 1.0 / FRAMES_VERTICAL;
     
     // Calculate UV coordinates for the current frame
+    // CORRECTED: In UV space, v=0 is the BOTTOM of the texture
     const u0 = frameIndex * frameWidth;
-    const v0 = rowIndex * frameHeight;
     const u1 = u0 + frameWidth;
-    const v1 = v0 + frameHeight;
+    
+    // FIXED: For Row 0 (walking animation, TOP row), v coordinates should be (0.5, 1.0)
+    // For Row 1 (idle animation, BOTTOM row), v coordinates should be (0.0, 0.5)
+    let v0, v1;
+    if (rowIndex === SPRITE_CONFIG.WALK_ROW) { // TOP row (walking)
+      v0 = 0.5;  // Start 50% down from top
+      v1 = 1.0;  // End at bottom of texture
+    } else { // BOTTOM row (idle)
+      v0 = 0.0;  // Start at top of texture 
+      v1 = 0.5;  // End 50% down from top
+    }
     
     console.log(`Setting UVs for frame: ${frameIndex} in row: ${rowIndex}`);
-    console.log(`UV coordinates: (${u0.toFixed(4)}, ${v0.toFixed(4)}) to (${u1.toFixed(4)}, ${v1.toFixed(4)})`);
+    console.log(`FIXED UV coordinates: (${u0.toFixed(4)}, ${v0.toFixed(4)}) to (${u1.toFixed(4)}, ${v1.toFixed(4)})`);
     
     // Skip if geometry has no UV attribute
     if (!geometry.attributes || !geometry.attributes.uv) {
@@ -217,29 +233,18 @@ export class Player {
     const uvs = geometry.attributes.uv;
     
     try {
-      // THREE.js PlaneGeometry UV coordinates convention:
-      // UV coordinates are laid out as (u,v) pairs, where:
-      // u is horizontal (0=left, 1=right)
-      // v is vertical (0=bottom, 1=top in texture space)
+      // CORRECTED UV mapping that matches the sprite sheet orientation:
       
-      // For a plane geometry with 4 vertices, the default order is:
-      // 0 = bottom left
-      // 1 = bottom right
-      // 2 = top left
-      // 3 = top right
-      
-      // NOTE: This ordering can be different depending on how the geometry is created
-      
-      // Bottom left 
+      // Bottom left vertex (lower left corner of frame)
       uvs.setXY(0, u0, v0);
       
-      // Bottom right
+      // Bottom right vertex (lower right corner of frame)
       uvs.setXY(1, u1, v0);
       
-      // Top left  
+      // Top left vertex (upper left corner of frame)
       uvs.setXY(2, u0, v1);
       
-      // Top right (if available)
+      // Top right vertex (upper right corner of frame)
       if (uvs.count >= 4) {
         uvs.setXY(3, u1, v1);
       }
@@ -309,21 +314,22 @@ export class Player {
       
       // Set each corner of the quad to show the correct part of the sprite sheet
       
-      // GRID LAYOUT (6x2):
+      // CORRECTED GRID LAYOUT (6x2):
       // Each cell is 1/6 (0.1667) wide and 1/2 (0.5) tall
-      // Idle frame is at column 0, row 1 (second row)
+      // We need to flip the vertical coordinates!
+      // Idle frame is at column 0, row 1 (BOTTOM row, not top)
       
-      // Bottom left vertex - lower left corner of idle frame
-      uvs.setXY(0, 0.0, 0.5);
+      // Bottom left vertex - UPPER left corner of idle frame
+      uvs.setXY(0, 0.0, 0.0);
       
-      // Bottom right vertex - lower right corner of idle frame  
-      uvs.setXY(1, 0.1667, 0.5);
+      // Bottom right vertex - UPPER right corner of idle frame  
+      uvs.setXY(1, 0.1667, 0.0);
       
-      // Top left vertex - upper left corner of idle frame
-      uvs.setXY(2, 0.0, 1.0);
+      // Top left vertex - LOWER left corner of idle frame
+      uvs.setXY(2, 0.0, 0.5);
       
-      // Top right vertex - upper right corner of idle frame
-      uvs.setXY(3, 0.1667, 1.0);
+      // Top right vertex - LOWER right corner of idle frame
+      uvs.setXY(3, 0.1667, 0.5);
       
       uvs.needsUpdate = true;
       console.log("IDLE SPRITE UVs UPDATED");
