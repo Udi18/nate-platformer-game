@@ -25,8 +25,10 @@ export interface PlayerState {
  * The sprite sheet is laid out as follows:
  * - 750px width × 250px height total image size
  * - 6 frames per row, each 125px × 125px
- * - Row 0 (top row): Walking/Running animation (6 frames)
- * - Row 1 (bottom row): Standing still animation (1 frame)
+ * - Row 0 (top row): Walking/Running animation (6 frames, columns 0-5)
+ * - Row 1 (bottom row): Standing still animation (4 frames, columns 0-3)
+ * 
+ * NOTE: The bottom row has 4 idle animation frames in columns 0-3
  */
 export const SPRITE_CONFIG = {
   // Sprite sheet dimensions (pixels)
@@ -44,7 +46,7 @@ export const SPRITE_CONFIG = {
   ANIMATION_FPS: 6,
   // Number of frames to use for each animation (may be less than FRAMES_PER_ROW)
   WALK_FRAMES: 6,  // Use all 6 frames for walking (frames 0-5)
-  IDLE_FRAMES: 1   // Use only first frame for idle (frame 0)
+  IDLE_FRAMES: 4   // Use all 4 frames for idle animation
 };
 
 /**
@@ -314,22 +316,52 @@ export class Player {
       
       // Set each corner of the quad to show the correct part of the sprite sheet
       
-      // CORRECTED GRID LAYOUT (6x2):
-      // Each cell is 1/6 (0.1667) wide and 1/2 (0.5) tall
-      // We need to flip the vertical coordinates!
-      // Idle frame is at column 0, row 1 (BOTTOM row, not top)
+      // Let's try a completely different approach for the idle sprite
+      // If there are 4 idle frames in the bottom row, we should use them
       
-      // Bottom left vertex - UPPER left corner of idle frame
-      uvs.setXY(0, 0.0, 0.0);
+      // Cycle through idle animation frames over time
+      // Instead of using a fixed frame, we'll derive the current frame based on time
+      // This creates a smooth idle animation using all 4 frames
       
-      // Bottom right vertex - UPPER right corner of idle frame  
-      uvs.setXY(1, 0.1667, 0.0);
+      // Calculate which idle frame to show (0-3)
+      // Use a safer approach for getting current time that works in tests too
+      let now;
+      try {
+        now = performance.now() / 1000;  // Current time in seconds
+      } catch (e) {
+        now = Date.now() / 1000;  // Fallback for environments without performance API
+      }
       
-      // Top left vertex - LOWER left corner of idle frame
-      uvs.setXY(2, 0.0, 0.5);
+      const idleAnimSpeed = 1.5;  // Slower than walking animation for a subtle idle
       
-      // Top right vertex - LOWER right corner of idle frame
-      uvs.setXY(3, 0.1667, 0.5);
+      // Calculate the frame index (0-3) based on time
+      const currentIdleFrame = Math.floor((now * idleAnimSpeed) % SPRITE_CONFIG.IDLE_FRAMES);
+      
+      // Each frame is 1/6 of the texture width
+      const frameWidthUV = 1.0 / 6; 
+      
+      // Calculate U coordinates for this frame
+      const idleFrameU0 = currentIdleFrame * frameWidthUV;
+      const idleFrameU1 = idleFrameU0 + frameWidthUV;
+      
+      // Let's use a different approach for vertical coordinates
+      // Bottom row - in THREE.js UV space (0,0) is bottom-left
+      const idleFrameV0 = 0.0; // Bottom of texture
+      const idleFrameV1 = 0.5; // Halfway up texture
+      
+      console.log(`IDLE ANIMATION: Frame ${currentIdleFrame}/4, UVs: (${idleFrameU0.toFixed(4)}, ${idleFrameV0.toFixed(4)}) to (${idleFrameU1.toFixed(4)}, ${idleFrameV1.toFixed(4)})`);
+      
+      // Bottom left
+      uvs.setXY(0, idleFrameU0, idleFrameV0);
+      
+      // Bottom right
+      uvs.setXY(1, idleFrameU1, idleFrameV0);
+      
+      // Top left
+      uvs.setXY(2, idleFrameU0, idleFrameV1);
+      
+      // Top right
+      uvs.setXY(3, idleFrameU1, idleFrameV1);
       
       uvs.needsUpdate = true;
       console.log("IDLE SPRITE UVs UPDATED");
