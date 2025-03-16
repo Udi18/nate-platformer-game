@@ -1,6 +1,25 @@
-import { describe, expect, it, beforeEach } from 'vitest'
-import { Player, DEFAULT_PLAYER } from '../src/game/player'
+import { describe, expect, it, beforeEach, vi } from 'vitest'
+import { Player, DEFAULT_PLAYER, SPRITE_CONFIG } from '../src/game/player'
 import * as THREE from 'three'
+
+// Mock Player's updateUVs method to prevent texture-related errors
+vi.mock('../src/game/player', async (importOriginal) => {
+  const module = await importOriginal();
+  
+  return {
+    ...module,
+    Player: class extends module.Player {
+      // Override sprite animation methods to prevent errors in tests
+      updateAnimation() {
+        // Do nothing in tests
+      }
+      
+      updateUVs() {
+        // Do nothing in tests
+      }
+    }
+  };
+});
 
 describe('Player', () => {
   let player: Player

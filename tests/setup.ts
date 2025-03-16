@@ -63,13 +63,38 @@ vi.mock('../src/game/game', () => {
   }
 })
 
+// Mock for Texture
+class MockTexture {
+  image = {}
+  magFilter = 1
+  needsUpdate = false
+}
+
+// Mock for PlaneGeometry with UV support
+class MockPlaneGeometryWithUVs extends MockPlaneGeometry {
+  attributes = {
+    uv: {
+      count: 4,
+      setXY: vi.fn(),
+      needsUpdate: false
+    }
+  }
+}
+
+// Mock for TextureLoader
+class MockTextureLoader {
+  load(url) {
+    return new MockTexture();
+  }
+}
+
 // Mock Three.js
 vi.mock('three', () => {
   return {
     Scene: vi.fn().mockImplementation(() => new MockScene()),
     WebGLRenderer: vi.fn().mockImplementation(() => new MockWebGLRenderer()),
     OrthographicCamera: vi.fn().mockImplementation(() => new MockOrthographicCamera()),
-    PlaneGeometry: vi.fn().mockImplementation(() => new MockPlaneGeometry()),
+    PlaneGeometry: vi.fn().mockImplementation(() => new MockPlaneGeometryWithUVs()),
     CircleGeometry: vi.fn().mockImplementation(() => new MockCircleGeometry()),
     MeshBasicMaterial: vi.fn().mockImplementation(() => new MockMeshBasicMaterial()),
     Mesh: vi.fn().mockImplementation(() => new MockMesh()),
@@ -79,7 +104,11 @@ vi.mock('three', () => {
       add: vi.fn(),
       remove: vi.fn(),
       children: []
-    }))
+    })),
+    TextureLoader: vi.fn().mockImplementation(() => new MockTextureLoader()),
+    Texture: vi.fn().mockImplementation(() => new MockTexture()),
+    NearestFilter: 1,
+    LinearFilter: 2
   }
 })
 
