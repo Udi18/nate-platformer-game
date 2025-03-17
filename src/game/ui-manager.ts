@@ -23,22 +23,6 @@ export class UIManager {
     this.mainMenuOverlay = document.getElementById('main-menu') as HTMLElement;
     this.gameOverOverlay = document.getElementById('game-over-overlay') as HTMLElement;
     
-    if (!this.scoreValueElement) {
-      console.error('Could not find score-value element in the DOM');
-    }
-    
-    if (!this.pauseOverlay) {
-      console.error('Could not find pause-overlay element in the DOM');
-    }
-    
-    if (!this.mainMenuOverlay) {
-      console.error('Could not find main-menu element in the DOM');
-    }
-    
-    if (!this.gameOverOverlay) {
-      console.error('Could not find game-over-overlay element in the DOM');
-    }
-    
     // Initialize UI with default values
     this.updateScore(0);
     
@@ -95,9 +79,6 @@ export class UIManager {
   public showMainMenu(): void {
     if (this.mainMenuOverlay) {
       this.mainMenuOverlay.style.display = 'flex';
-      console.log('Main menu shown');
-    } else {
-      console.error('Main menu overlay element not found');
     }
   }
   
@@ -107,9 +88,6 @@ export class UIManager {
   public hideMainMenu(): void {
     if (this.mainMenuOverlay) {
       this.mainMenuOverlay.style.display = 'none';
-      console.log('Main menu hidden');
-    } else {
-      console.error('Main menu overlay element not found');
     }
   }
   

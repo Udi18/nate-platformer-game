@@ -4,7 +4,8 @@ import { Collectible } from './collectibles';
 import { Enemy } from './enemies';
 import { getCurrentTheme, PlayerColor } from './color-config';
 import { PlayerSprite } from './player-sprite';
-import { PlayerPhysics, PhysicsState } from './player-physics';
+import { PlayerPhysics } from './physics/player-physics';
+import { PhysicsState } from './physics/entity-physics';
 
 export interface PlayerState {
   position: { x: number; y: number };
@@ -158,7 +159,7 @@ export class Player {
    */
   public update(deltaTime: number): void {
     // Update physics and get animation state
-    const { isMoving, facingLeft } = this.physics.update(this.keys, deltaTime);
+    const { isMoving, facingLeft } = this.physics.updateWithInput(this.keys, deltaTime);
     
     // Update sprite animation if using sprites
     if (this.displaySettings.useSprite && this.sprite) {
@@ -208,5 +209,13 @@ export class Player {
       velocity: state.velocity,
       isGrounded: state.isGrounded
     };
+  }
+
+  /**
+   * Get player position
+   */
+  public get position(): { x: number; y: number } {
+    const state = this.getPhysicsState();
+    return state.position;
   }
 }

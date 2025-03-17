@@ -76,17 +76,13 @@ export class Game {
     
     if (this.developmentMode) {
       this.uiManager.hideMainMenu();
-      console.log('Game initialized in development mode (skipping start screen)');
     } else {
       this.uiManager.showMainMenu();
-      console.log('Game initialized in normal mode (showing start screen)');
     }
   }
   
   private setupGameElements(): void {
     if (this.useProceduralLevel) {
-      console.log('Generating procedural level...');
-      
       const params = {...DEFAULT_LEVEL_PARAMS, seed: this.currentLevelSeed};
       const level = generateLevel(params);
       
@@ -94,8 +90,6 @@ export class Game {
       this.platforms = this.createPlatformsWithMeshes(level.platforms);
       this.collectibles = createCollectibles(this.scene, level.collectibles);
       this.enemies = createEnemies(this.scene, level.enemies);
-      
-      console.log(`Procedural level created with seed ${level.seed}, ${level.platforms.length} platforms, ${level.enemies.length} enemies, and ${level.collectibles.length} collectibles`);
     } else {
       this.platforms = this.createPlatformsWithMeshes(DEFAULT_PLATFORMS);
       this.collectibles = createCollectibles(this.scene, DEFAULT_COLLECTIBLES);
@@ -201,19 +195,11 @@ export class Game {
     this.isPaused = false;
     this.isGameOver = false;
     this.lastTime = performance.now();
-    
-    console.log('Game started from main menu');
   }
   
   public start(): void {
     this.lastTime = performance.now();
     this.animate();
-    
-    if (this.developmentMode) {
-      console.log('Game animation loop started (development mode)');
-    } else {
-      console.log('Game animation loop started (normal mode - paused at start)');
-    }
   }
   
   public stop(): void {
@@ -237,8 +223,6 @@ export class Game {
       if (pauseButton) {
         pauseButton.textContent = '▶️ Resume (P)';
       }
-      
-      console.log('Game paused');
     } else {
       this.uiManager.hidePauseOverlay();
       
@@ -248,8 +232,6 @@ export class Game {
       }
       
       this.lastTime = performance.now();
-      
-      console.log('Game resumed');
     }
   }
   
@@ -279,14 +261,11 @@ export class Game {
       return;
     }
     
-    console.log('Game over triggered!');
     this.isGameOver = true;
     this.uiManager.showGameOver();
   }
   
   public generateNewLevel(): void {
-    console.log('Generating new level...');
-    
     if (!this.useProceduralLevel) return;
     
     // Clear any held keys first to prevent inputs being carried over
@@ -296,8 +275,6 @@ export class Game {
     
     this.currentLevelSeed = undefined;
     this.restartGame(true);
-    
-    console.log('New level generated with seed:', this.currentLevelSeed);
   }
 
   private cleanupGameElements(): void {
@@ -382,8 +359,6 @@ export class Game {
   }
 
   public restartGame(generateNewLevel: boolean = false): void {
-    console.log('Restarting game...');
-    
     this.uiManager.hideGameOver();
     this.isGameOver = false;
     
@@ -438,8 +413,6 @@ export class Game {
     this.renderer.render(this.scene, this.camera);
     
     this.lastTime = performance.now();
-    
-    console.log('Game restarted with clean scene');
   }
   
   private animate = (time: number = 0): void => {
@@ -469,7 +442,6 @@ export class Game {
     const collectedItems = this.player.checkCollectibleCollisions(this.collectibles);
     if (collectedItems.length > 0) {
       this.uiManager.updateScore(collectedItems.length, true);
-      console.log(`Collected items: ${collectedItems.length}. Total score: ${this.uiManager.getScore()}`);
     }
     
     this.player.checkEnemyCollisions(this.enemies);

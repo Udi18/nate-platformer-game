@@ -8,7 +8,7 @@ export const SPRITE_CONFIG = {
   FRAMES_PER_ROW: 6,
   IDLE_ROW: 1,  // Bottom row - Idle animation
   WALK_ROW: 0,  // Top row - Walking animation
-  IDLE_FPS: 4,
+  IDLE_FPS: 2.5, // Reduced FPS for smoother idle animation
   WALK_FPS: 8,
   IDLE_FRAMES: 4,
   WALK_FRAMES: 6
@@ -21,6 +21,7 @@ export class PlayerSprite {
   private animationTimer: number = 0;
   private isMoving: boolean = false;
   private facingLeft: boolean = false;
+  private lastFrameTime: number = 0; // Add frame timing to smooth animations
   
   constructor(texturePath: string) {
     // Load the sprite sheet texture
@@ -66,6 +67,7 @@ export class PlayerSprite {
       // Reset animation when switching states
       this.animationTimer = 0;
       this.currentFrame = 0;
+      this.lastFrameTime = 0;
       
       // Update frame immediately with new animation state
       this.updateSpriteFrame(0, mesh, isMoving ? SPRITE_CONFIG.WALK_ROW : SPRITE_CONFIG.IDLE_ROW);
@@ -73,6 +75,7 @@ export class PlayerSprite {
     
     // Increment animation timer
     this.animationTimer += deltaTime;
+    this.lastFrameTime += deltaTime;
     
     // Set frame rate based on animation state
     const fps = isMoving ? SPRITE_CONFIG.WALK_FPS : SPRITE_CONFIG.IDLE_FPS;
@@ -80,9 +83,15 @@ export class PlayerSprite {
     
     // Update frame when timer exceeds frame duration
     if (this.animationTimer >= frameDuration) {
-      // Calculate how many frames to advance (handles lag)
-      const framesToAdvance = Math.floor(this.animationTimer / frameDuration);
+      // Add a small buffer time for idle animation to make it smoother
+      if (!isMoving && this.lastFrameTime < frameDuration * 1.2) {
+        return; // Skip this frame update for smoother idle transition
+      }
+      
+      // Calculate frames to advance (normally just 1)
+      const framesToAdvance = Math.min(1, Math.floor(this.animationTimer / frameDuration));
       this.animationTimer %= frameDuration;
+      this.lastFrameTime = 0;
       
       // Get max frames for current animation
       const maxFrames = isMoving ? SPRITE_CONFIG.WALK_FRAMES : SPRITE_CONFIG.IDLE_FRAMES;
