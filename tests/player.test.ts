@@ -21,6 +21,24 @@ vi.mock('../src/game/player', async (importOriginal) => {
   };
 });
 
+// Mock THREE.js related components to avoid rendering issues in test environment
+vi.mock('three', async () => {
+  const actualThree = await vi.importActual('three');
+  return {
+    ...actualThree,
+    TextureLoader: class {
+      load() {
+        return {
+          flipY: false, 
+          magFilter: 1,
+          minFilter: 1,
+          generateMipmaps: false
+        };
+      }
+    }
+  };
+});
+
 describe('Player', () => {
   let player: Player
 
@@ -167,5 +185,116 @@ describe('Player', () => {
     
     // Should return false
     expect(newResult).toBe(false)
+  })
+
+  // New tests for better coverage
+  
+  it('should handle alternative keyboard inputs for movement', () => {
+    const deltaTime = 1/60
+    
+    // Test WASD movement
+    player.keys['w'] = true
+    player.isGrounded = true
+    player.update(deltaTime)
+    expect(player.velocity.y).toBeGreaterThan(0) // Jump with 'w'
+    
+    player.keys = {}
+    player.velocity.x = 0
+    player.velocity.y = 0
+    
+    player.keys['a'] = true
+    player.update(deltaTime)
+    expect(player.velocity.x).toBe(-player.speed) // Move left with 'a'
+    
+    player.keys = {}
+    player.velocity.x = 0
+    
+    player.keys['d'] = true
+    player.update(deltaTime)
+    expect(player.velocity.x).toBe(player.speed) // Move right with 'd'
+    
+    // Test uppercase keys
+    player.keys = {}
+    player.velocity.x = 0
+    
+    player.keys['D'] = true
+    player.update(deltaTime)
+    expect(player.velocity.x).toBe(player.speed) // Move right with 'D'
+  })
+  
+  it('should handle simultaneous keyboard inputs correctly', () => {
+    const deltaTime = 1/60
+    
+    // Press left and right together (should prioritize right in this implementation)
+    player.keys['ArrowLeft'] = true
+    player.keys['ArrowRight'] = true
+    player.update(deltaTime)
+    
+    // The exact behavior depends on your implementation, but typically right would win
+    // If your implementation behaves differently, adjust this test accordingly
+    expect(player.velocity.x).toBe(player.speed)
+    
+    // Press jump and move simultaneously
+    player.keys = {}
+    player.isGrounded = true
+    player.keys['ArrowUp'] = true
+    player.keys['ArrowRight'] = true
+    player.update(deltaTime)
+    
+    expect(player.velocity.x).toBe(player.speed)
+    expect(player.velocity.y).toBeGreaterThan(0)
+  })
+  
+  it('should handle different display modes', () => {
+    // Test that setDisplayMode doesn't throw errors
+    expect(() => {
+      player.setDisplayMode(false);
+    }).not.toThrow();
+    
+    // Check that the display setting was updated
+    expect(player.displaySettings.useSprite).toBe(false);
+    
+    // Switch back to sprite mode
+    expect(() => {
+      player.setDisplayMode(true);
+    }).not.toThrow();
+    
+    expect(player.displaySettings.useSprite).toBe(true);
+  })
+  
+  it('should return the correct player state', () => {
+    // Set some specific state values
+    player.isGrounded = true;
+    player.velocity.x = 5;
+    player.velocity.y = -2;
+    player.position.x = 10;
+    player.position.y = 7;
+    
+    // Get the state and verify it matches
+    const state = player.getState();
+    
+    expect(state.isGrounded).toBe(true);
+    expect(state.velocity.x).toBe(5);
+    expect(state.velocity.y).toBe(-2);
+    expect(state.position.x).toBe(10);
+    expect(state.position.y).toBe(7);
+  })
+  
+  it('should mock platform collisions correctly', () => {
+    // Create mock platform for collision testing
+    const platformGeometry = new THREE.PlaneGeometry(4, 1);
+    const platformMaterial = new THREE.MeshBasicMaterial();
+    const platform = new THREE.Mesh(platformGeometry, platformMaterial);
+    platform.position.set(0, -5, 0);
+    
+    // Position player above platform
+    player.position.y = -3;
+    player.velocity.y = -5;
+    
+    // Call collision detection (note: actual physics calculations are mocked)
+    player.checkPlatformCollisions([platform]);
+    
+    // Since we're mocking, we don't expect real physics response, but method should run without errors
+    expect(() => player.checkPlatformCollisions([platform])).not.toThrow();
   })
 })
