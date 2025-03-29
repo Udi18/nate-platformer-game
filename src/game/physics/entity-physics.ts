@@ -85,9 +85,11 @@ export class EntityPhysics {
    * @param platforms Array of platform meshes
    */
   public checkPlatformCollisions(platforms: THREE.Mesh[]): void {
+    // Default to not grounded
+    let wasGrounded = this.isGrounded;
     this.isGrounded = false;
     
-    platforms.forEach(platform => {
+    for (const platform of platforms) {
       // Get platform dimensions from its geometry
       const platformGeometry = platform.geometry as THREE.PlaneGeometry;
       const platformWidth = platformGeometry.parameters.width;
@@ -114,6 +116,16 @@ export class EntityPhysics {
       const verticalOverlap = 
         entityBottom < platformTop && 
         entityTop > platformBottom;
+      
+      // Special case for landing directly on top of platforms
+      if (horizontalOverlap && 
+          Math.abs(entityBottom - platformTop) < 0.2 && 
+          this.velocity.y <= 0) {
+        this.position.y = platformTop + this.height / 2;
+        this.velocity.y = 0;
+        this.isGrounded = true;
+        continue; // Skip further checks for this platform
+      }
       
       // Full collision check
       if (horizontalOverlap && verticalOverlap) {
@@ -146,7 +158,7 @@ export class EntityPhysics {
           this.velocity.x = 0;
         }
       }
-    });
+    }
   }
   
   /**

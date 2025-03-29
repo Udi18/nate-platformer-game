@@ -1,3 +1,4 @@
+import * as THREE from 'three';
 import { EntityPhysics } from './entity-physics';
 
 /**
@@ -76,14 +77,38 @@ export class EnemyPhysics extends EntityPhysics {
    * Override platform collision to handle direction change
    */
   public checkPlatformCollisions(platforms: THREE.Mesh[]): void {
-    // Call the parent method first
+    const previousVelocityX = this.velocity.x;
+
     super.checkPlatformCollisions(platforms);
-    
-    // In addition to normal collision resolution, change direction when hitting walls
-    // This can be expanded with more sophisticated behavior
-    if (this.moveType === 'horizontal' && this.velocity.x === 0) {
-      this.direction *= -1;
-      this.facingLeft = this.direction < 0;
+
+    if (this.moveType === 'horizontal' && this.isGrounded) {
+      if (previousVelocityX !== 0 && this.velocity.x === 0) {
+        this.direction *= -1;
+        this.facingLeft = this.direction < 0;
+        this.velocity.x = this.direction * this.speed;
+      }
     }
+
+    // Ensure the enemy doesn't get stuck in walls by slightly adjusting position
+    platforms.forEach(platform => {
+      const platformGeometry = platform.geometry as THREE.PlaneGeometry;
+      const platformWidth = platformGeometry.parameters.width;
+      const platformLeft = platform.position.x - platformWidth / 2;
+      const platformRight = platform.position.x + platformWidth / 2;
+
+      if (this.position.x < platformLeft) {
+        this.position.x = platformLeft - this.width / 2;
+      } else if (this.position.x > platformRight) {
+        this.position.x = platformRight + this.width / 2;
+      }
+    });
+  }
+
+  /**
+   * Get the current movement direction
+   * @returns 1 for right, -1 for left
+   */
+  public getDirection(): number {
+    return this.direction;
   }
 }

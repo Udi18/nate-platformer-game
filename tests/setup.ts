@@ -1,4 +1,5 @@
 import '@testing-library/jest-dom'
+import { vi } from 'vitest'
 
 // Create mocks for Three.js
 class MockScene {
@@ -57,7 +58,9 @@ vi.mock('../src/game/game', () => {
       stop: vi.fn(),
       togglePause: vi.fn(),
       destroy: vi.fn(),
-      restartGame: vi.fn(),
+      restartGame: vi.fn(function(generateNewLevel = false) {
+        return generateNewLevel;
+      }),
       generateNewLevel: vi.fn()
     }))
   }
@@ -83,7 +86,7 @@ class MockPlaneGeometryWithUVs extends MockPlaneGeometry {
 
 // Mock for TextureLoader
 class MockTextureLoader {
-  load(url) {
+  load(url: string): MockTexture {
     return new MockTexture();
   }
 }
@@ -113,11 +116,11 @@ vi.mock('three', () => {
 })
 
 // Mock window methods
-global.requestAnimationFrame = vi.fn().mockImplementation(callback => {
+globalThis.requestAnimationFrame = vi.fn().mockImplementation(callback => {
   return setTimeout(() => callback(performance.now()), 1000 / 60)
 })
 
-global.cancelAnimationFrame = vi.fn().mockImplementation(id => {
+globalThis.cancelAnimationFrame = vi.fn().mockImplementation(id => {
   clearTimeout(id)
 })
 

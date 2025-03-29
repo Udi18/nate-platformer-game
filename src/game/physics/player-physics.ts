@@ -17,14 +17,18 @@ export class PlayerPhysics extends EntityPhysics {
     this.velocity.x = 0;
     
     // Handle movement input
-    if (keys['ArrowLeft'] || keys['a'] || keys['A']) {
-      this.velocity.x = -this.speed;
-      this.isMoving = true;
-      this.facingLeft = true;
-    } else if (keys['ArrowRight'] || keys['d'] || keys['D']) {
+    const leftPressed = keys['ArrowLeft'] || keys['a'] || keys['A'];
+    const rightPressed = keys['ArrowRight'] || keys['d'] || keys['D'];
+    
+    // Prioritize right movement if both keys are pressed
+    if (rightPressed) {
       this.velocity.x = this.speed;
       this.isMoving = true;
       this.facingLeft = false;
+    } else if (leftPressed) {
+      this.velocity.x = -this.speed;
+      this.isMoving = true;
+      this.facingLeft = true;
     } else {
       this.isMoving = false;
     }
@@ -102,11 +106,19 @@ export class PlayerPhysics extends EntityPhysics {
     const playerBottom = this.position.y - this.height / 2;
     
     for (const enemy of enemies) {
+      // Skip if enemy doesn't have position or dimensions
+      if (!enemy || !enemy.physics) {
+        continue;
+      }
+      
+      // Get enemy position from its physics component
+      const enemyPosition = enemy.physics.getState().position;
+      
       // Calculate enemy bounds
-      const enemyLeft = enemy.position.x - enemy.width / 2;
-      const enemyRight = enemy.position.x + enemy.width / 2;
-      const enemyTop = enemy.position.y + enemy.height / 2;
-      const enemyBottom = enemy.position.y - enemy.height / 2;
+      const enemyLeft = enemyPosition.x - enemy.width / 2;
+      const enemyRight = enemyPosition.x + enemy.width / 2;
+      const enemyTop = enemyPosition.y + enemy.height / 2;
+      const enemyBottom = enemyPosition.y - enemy.height / 2;
       
       // AABB collision check
       if (

@@ -18,7 +18,11 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+    "noUncheckedSideEffectImports": true,
+
+    /* Add vitest types explicitly (Optional but can help IDEs) */
+     "types": ["vite/client", "vitest/globals"] // Add 'vitest/globals'
   },
-  "include": ["src"]
+  // Include both 'src' and 'tests' directories
+  "include": ["src", "tests", "vitest.config.ts"] // Add "tests" and "vitest.config.ts"
 }

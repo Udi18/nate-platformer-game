@@ -1,85 +1,98 @@
-import { describe, expect, it } from 'vitest'
-import { 
-  DEFAULT_LEVEL_PARAMS, 
-  generateLevel, 
-  setRandomSeed, 
-  getCurrentSeed 
-} from '../src/game/level-generator'
+import { describe, expect, it } from 'vitest';
+import { generatePlatforms, generateEnemies, generateCollectibles, DEFAULT_LEVEL_PARAMS, LevelGenerationParams } from '../src/game/level-generator';
+import { PlatformDefinition } from '../src/game/platforms';
 
-describe('Level Generator', () => {
-  it('should generate a level with the expected components', () => {
-    const level = generateLevel()
-    
-    expect(level).toHaveProperty('platforms')
-    expect(level).toHaveProperty('enemies')
-    expect(level).toHaveProperty('collectibles')
-    expect(level).toHaveProperty('seed')
-    
-    expect(Array.isArray(level.platforms)).toBe(true)
-    expect(Array.isArray(level.enemies)).toBe(true)
-    expect(Array.isArray(level.collectibles)).toBe(true)
-    expect(typeof level.seed).toBe('number')
-  })
+// Helper function to calculate total width of floating platforms
+const calculateFloatingPlatformWidth = (platforms: PlatformDefinition[], groundY: number): number => {
+  return platforms
+    .filter(p => Math.abs(p.position.y - groundY) > 0.1) // Exclude ground platforms
+    .reduce((totalWidth, p) => totalWidth + p.width, 0);
+};
 
-  it('should generate consistent level structure with the same seed', () => {
-    // Set a specific seed
-    const testSeed = 123456
-    
-    // Generate first level with explicit params including seed
-    const params = { ...DEFAULT_LEVEL_PARAMS, seed: testSeed }
-    const level1 = generateLevel(params)
-    
-    // Since our random number generator has a side effect pattern that may not 
-    // make levels exactly the same, we'll verify some other properties
+describe('Level Generator - Density Checks', () => {
 
-    // Verify seed was used
-    expect(level1.seed).toBe(testSeed)
-    
-    // In our real application, we'd validate this better
-    // But for unit tests, we just validate that we get non-empty collections
-    expect(level1.platforms.length).toBeGreaterThan(0)
-    expect(level1.enemies.length).toBeGreaterThan(0)
-    expect(level1.collectibles.length).toBeGreaterThan(0)
-  })
-
-  it('should respect level parameters', () => {
-    // Create custom parameters with different bounds
-    const customParams = {
+  it('should generate enemy count roughly based on density and platform space', () => {
+    const params: LevelGenerationParams = {
       ...DEFAULT_LEVEL_PARAMS,
-      levelMinX: -20, // Half the default width
-      levelMaxX: 20,
-      seed: 789012
-    }
-    
-    const level = generateLevel(customParams)
-    
-    // Check that platforms respect the boundaries
-    level.platforms.forEach(platform => {
-      const leftEdge = platform.position.x - platform.width / 2
-      const rightEdge = platform.position.x + platform.width / 2
-      
-      // Allow a small margin for platform placement algorithms
-      expect(leftEdge).toBeGreaterThan(customParams.levelMinX - 2)
-      expect(rightEdge).toBeLessThan(customParams.levelMaxX + 2)
-    })
-    
-    // Seed should be maintained
-    expect(level.seed).toBe(customParams.seed)
-  })
+      seed: 67890, // Use a fixed seed for reproducibility
+      enemyDensity: 0.5, // Example density: 50% chance per platform
+      minEnemiesPerPlatform: 1,
+      maxEnemiesPerPlatform: 2
+    };
+    const platforms = generatePlatforms(params);
+    const enemies = generateEnemies(platforms, params);
 
-  it('should allow seed manipulation', () => {
-    // Set a seed
-    const testSeed = 555555
-    const returnedSeed = setRandomSeed(testSeed)
-    
-    // Check it was set correctly
-    expect(returnedSeed).toBe(testSeed)
-    expect(getCurrentSeed()).toBe(testSeed)
-    
-    // Check auto-generation of seed
-    const newSeed = setRandomSeed()
-    expect(typeof newSeed).toBe('number')
-    expect(getCurrentSeed()).toBe(newSeed)
-    expect(newSeed).not.toBe(testSeed) // Should be different
-  })
-})
+    // Count floating platforms suitable for enemies (width >= 2)
+    const suitableFloatingPlatforms = platforms.filter(p =>
+      Math.abs(p.position.y - params.groundY) > 0.1 && p.width >= 2
+    ).length;
+
+    // Estimate expected enemy count range (this is approximate)
+    // Lower bound: density * suitable platforms * min enemies
+    // Upper bound: density * suitable platforms * max enemies
+    const expectedMinEnemies = Math.floor(suitableFloatingPlatforms * params.enemyDensity * params.minEnemiesPerPlatform * 0.5); // Allow some variance
+    const expectedMaxEnemies = Math.ceil(suitableFloatingPlatforms * params.enemyDensity * params.maxEnemiesPerPlatform * 1.5); // Allow some variance
+
+    // Add enemies potentially generated on ground platforms (from generateEnemies logic)
+    const groundPlatforms = platforms.filter(p => Math.abs(p.position.y - params.groundY) < 0.1 && p.width >= 2.5 && Math.abs(p.position.x) >= 3).length;
+    const maxGroundEnemies = groundPlatforms * 2; // Max 2 per suitable ground segment
+
+    expect(enemies.length).toBeGreaterThanOrEqual(expectedMinEnemies);
+    // Adjust upper bound check to include potential ground enemies
+    expect(enemies.length).toBeLessThanOrEqual(expectedMaxEnemies + maxGroundEnemies);
+  });
+
+  it('should generate collectible count roughly based on density and platform space', () => {
+    const params: LevelGenerationParams = {
+      ...DEFAULT_LEVEL_PARAMS,
+      seed: 112233, // Use a fixed seed
+      collectibleDensity: 0.8, // Example density: 80% chance per platform
+      minCollectiblesPerPlatform: 1,
+      maxCollectiblesPerPlatform: 3
+    };
+    const platforms = generatePlatforms(params);
+    const collectibles = generateCollectibles(platforms, params);
+
+    // Count platforms suitable for collectibles (width >= 1.5)
+    const suitablePlatforms = platforms.filter(p => p.width >= 1.5).length;
+
+    // Estimate expected collectible count range (approximate)
+    const expectedMinCollectibles = Math.floor(suitablePlatforms * params.collectibleDensity * params.minCollectiblesPerPlatform * 0.5);
+    const expectedMaxCollectibles = Math.ceil(suitablePlatforms * params.collectibleDensity * params.maxCollectiblesPerPlatform * 1.5);
+
+    // Add collectibles potentially generated over gaps (harder to estimate precisely)
+    // Let's add a buffer based on number of ground segments
+    const groundSegments = platforms.filter(p => Math.abs(p.position.y - params.groundY) < 0.1).length;
+    const maxGapCollectibles = (groundSegments > 1 ? groundSegments - 1 : 0) * 5; // Max 5 per gap
+
+    expect(collectibles.length).toBeGreaterThanOrEqual(expectedMinCollectibles);
+    expect(collectibles.length).toBeLessThanOrEqual(expectedMaxCollectibles + maxGapCollectibles); // Add buffer for gap collectibles
+  });
+
+  it('should generate fewer enemies with lower density', () => {
+    const paramsLow: LevelGenerationParams = { ...DEFAULT_LEVEL_PARAMS, seed: 456, enemyDensity: 0.1 };
+    const paramsHigh: LevelGenerationParams = { ...DEFAULT_LEVEL_PARAMS, seed: 456, enemyDensity: 0.9 }; // Same seed
+
+    const platformsLow = generatePlatforms(paramsLow);
+    const enemiesLow = generateEnemies(platformsLow, paramsLow);
+
+    const platformsHigh = generatePlatforms(paramsHigh); // Regenerate platforms with same seed
+    const enemiesHigh = generateEnemies(platformsHigh, paramsHigh);
+
+    // Expect significantly fewer enemies with lower density
+    expect(enemiesLow.length).toBeLessThan(enemiesHigh.length);
+  });
+
+  it('should generate fewer collectibles with lower density', () => {
+    const paramsLow: LevelGenerationParams = { ...DEFAULT_LEVEL_PARAMS, seed: 789, collectibleDensity: 0.1 };
+    const paramsHigh: LevelGenerationParams = { ...DEFAULT_LEVEL_PARAMS, seed: 789, collectibleDensity: 0.9 };
+
+    const platformsLow = generatePlatforms(paramsLow);
+    const collectiblesLow = generateCollectibles(platformsLow, paramsLow);
+
+    const platformsHigh = generatePlatforms(paramsHigh);
+    const collectiblesHigh = generateCollectibles(platformsHigh, paramsHigh);
+
+    expect(collectiblesLow.length).toBeLessThan(collectiblesHigh.length);
+  });
+});

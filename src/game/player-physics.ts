@@ -112,62 +112,44 @@ export class PlayerPhysics {
    */
   public checkPlatformCollisions(platforms: THREE.Mesh[]): void {
     this.isGrounded = false;
-    
+
     platforms.forEach(platform => {
-      // Get platform dimensions from its geometry
       const platformGeometry = platform.geometry as THREE.PlaneGeometry;
       const platformWidth = platformGeometry.parameters.width;
       const platformHeight = platformGeometry.parameters.height;
-      
-      // Calculate platform bounds
+
       const platformLeft = platform.position.x - platformWidth / 2;
       const platformRight = platform.position.x + platformWidth / 2;
       const platformTop = platform.position.y + platformHeight / 2;
       const platformBottom = platform.position.y - platformHeight / 2;
-      
-      // Calculate player bounds
+
       const playerLeft = this.position.x - this.width / 2;
       const playerRight = this.position.x + this.width / 2;
       const playerTop = this.position.y + this.height / 2;
       const playerBottom = this.position.y - this.height / 2;
-      
-      // Check for horizontal overlap
-      const horizontalOverlap = 
-        playerRight > platformLeft && 
-        playerLeft < platformRight;
-      
-      // Check for vertical overlap
-      const verticalOverlap = 
-        playerBottom < platformTop && 
-        playerTop > platformBottom;
-      
-      // Full collision check
+
+      const horizontalOverlap = playerRight > platformLeft && playerLeft < platformRight;
+      const verticalOverlap = playerBottom < platformTop && playerTop > platformBottom;
+
       if (horizontalOverlap && verticalOverlap) {
-        // Calculate overlap amounts
         const bottomOverlap = platformTop - playerBottom;
         const topOverlap = playerTop - platformBottom;
         const leftOverlap = playerRight - platformLeft;
         const rightOverlap = platformRight - playerLeft;
-        
-        // Find smallest overlap to determine collision side
+
         const minOverlap = Math.min(bottomOverlap, topOverlap, leftOverlap, rightOverlap);
-        
-        // Resolve based on smallest overlap
+
         if (minOverlap === bottomOverlap && this.velocity.y <= 0) {
-          // Bottom collision - player landing on platform
           this.position.y = platformTop + this.height / 2;
           this.velocity.y = 0;
           this.isGrounded = true;
         } else if (minOverlap === topOverlap && this.velocity.y > 0) {
-          // Top collision - player hitting head
           this.position.y = platformBottom - this.height / 2;
           this.velocity.y = 0;
         } else if (minOverlap === leftOverlap && this.velocity.x > 0) {
-          // Left collision - player hitting right side of platform
           this.position.x = platformLeft - this.width / 2;
           this.velocity.x = 0;
         } else if (minOverlap === rightOverlap && this.velocity.x < 0) {
-          // Right collision - player hitting left side of platform
           this.position.x = platformRight + this.width / 2;
           this.velocity.x = 0;
         }
