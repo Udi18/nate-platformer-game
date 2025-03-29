@@ -195,4 +195,21 @@ describe('PlayerPhysics', () => {
       expect(isInBounds).toBe(false);
     });
 
+    it('should fall due to gravity when not grounded', () => {
+      const deltaTime = 1 / 60; // Simulate 1 frame at 60 FPS
+      const initialY = physics.getState().position.y;
+      const initialVelocityY = physics.getState().velocity.y;
+
+      // Update for a few frames
+      for (let i = 0; i < 10; i++) {
+        physics.update(deltaTime);
+      }
+
+      const state = physics.getState();
+      // Should have fallen due to gravity
+      expect(state.position.y).toBeLessThan(initialY);
+      expect(state.velocity.y).toBeLessThan(initialVelocityY); // Velocity should decrease (become more negative)
+      expect(state.isGrounded).toBe(false);
+    });
+
 }); // End of main describe block
