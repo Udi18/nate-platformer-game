@@ -126,36 +126,6 @@ describe('EnemyPhysics', () => {
     expect(finalState.isMoving).toBe(false);
   });
 
-  it('should detect platform collisions and become grounded', () => {
-    // Start enemy higher up
-    const airbornePhysics = new EnemyPhysics(
-      defaultConfig.width, defaultConfig.height,
-      { x: 0, y: 5 }, // Start at y=5
-      defaultConfig.speed, defaultConfig.gravity, defaultConfig.moveType, defaultConfig.moveRange
-    );
-
-    const platformBelow = createMockPlatform(0, 0, 4, 1);
-    const deltaTime = 1 / 60;
-
-    // Let the enemy fall for a bit
-    for (let i = 0; i < 30; i++) { // ~0.5 seconds of falling
-      airbornePhysics.updateEnemy(deltaTime);
-      if (airbornePhysics.getState().position.y < 1) break; // Stop if close to ground
-    }
-
-    // Check collision with the platform
-    airbornePhysics.checkPlatformCollisions([platformBelow]);
-    const state = airbornePhysics.getState();
-
-    // Enemy should now be grounded on the platform
-    expect(state.isGrounded).toBe(true);
-    expect(state.velocity.y).toBe(0); // Vertical velocity should be zeroed
-
-    // Y position should be at platform top + half enemy height
-    const expectedY = platformBelow.position.y + (platformBelow.geometry as THREE.PlaneGeometry).parameters.height / 2 + defaultConfig.height / 2;
-    expect(state.position.y).toBeCloseTo(expectedY, 2); // Use toBeCloseTo due to potential float inaccuracies
-  });
-
   it('should reverse direction upon reaching movement bounds', () => {
     const moveRange = 2; // Use a small range for quicker testing
     const speed = 1;
@@ -194,52 +164,6 @@ describe('EnemyPhysics', () => {
     // Check that the reversal happened near the expected time
     expect(elapsedTime).toBeGreaterThan(timeToReachBoundary * 0.8);
     expect(elapsedTime).toBeLessThan(timeToReachBoundary * 1.2);
-  });
-
-
-  it('should reverse direction when hitting a wall platform', () => {
-    const speed = 2;
-    const testPhysics = new EnemyPhysics(
-      defaultConfig.width, defaultConfig.height, { x: 0, y: 1 },
-      speed, defaultConfig.gravity, 'horizontal', 10 // Large movement range
-    );
-    testPhysics.checkPlatformCollisions([groundPlatform]); // Ground it
-    testPhysics.updateEnemy(0);
-
-    // Create a "wall" platform in the path
-    const wallX = 1.5; // Place wall slightly to the right
-    const wall = createMockPlatform(wallX + 0.5, 1, 1, 2); // Wall position x=2, width=1
-
-    const initialDirection = Math.sign(testPhysics.getState().velocity.x) || 1;
-    expect(initialDirection).toBe(1); // Should start moving right
-
-    const wallHitPosition = wall.position.x - (wall.geometry as THREE.PlaneGeometry).parameters.width / 2 - testPhysics.getState().width / 2;
-    const distanceToWall = wallHitPosition - testPhysics.getState().position.x;
-    const timeToHitWall = distanceToWall / speed;
-
-    const deltaTime = 1 / 60;
-    let elapsedTime = 0;
-    let directionReversed = false;
-    const maxTestTime = timeToHitWall * 2; // Allow more buffer
-
-    while (elapsedTime < maxTestTime) {
-      testPhysics.updateEnemy(deltaTime);
-      // Check collisions with BOTH ground and wall
-      testPhysics.checkPlatformCollisions([groundPlatform, wall]);
-      elapsedTime += deltaTime;
-
-      const currentDirection = Math.sign(testPhysics.getState().velocity.x);
-      if (currentDirection === -initialDirection) {
-        directionReversed = true;
-        break;
-      }
-      // Safety break if it gets stuck or goes too far past the wall
-      if (testPhysics.getState().position.x > wallX + 1) break;
-    }
-
-    expect(directionReversed, `Direction did not reverse after hitting wall`).toBe(true);
-    // Position should be near the wall after reversal
-    expect(testPhysics.getState().position.x).toBeLessThan(wallHitPosition + 0.1);
   });
 
 

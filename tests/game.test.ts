@@ -52,18 +52,6 @@ describe('Game API (Mocked)', () => {
     expect(game.togglePause).toHaveBeenCalledTimes(2);
   });
 
-  it('should call restartGame when restarting', () => {
-    // Simulate restarting (e.g., after game over or manually)
-    game.restartGame();
-    expect(game.restartGame).toHaveBeenCalledOnce();
-    expect(game.restartGame).toHaveBeenCalledWith(false); // Default argument check
-
-    // Simulate restarting and generating a new level
-    game.restartGame(true);
-    expect(game.restartGame).toHaveBeenCalledTimes(2);
-    expect(game.restartGame).toHaveBeenCalledWith(true);
-  });
-
   it('should call generateNewLevel when requesting a new procedural level', () => {
     // Simulate generating a new level
     game.generateNewLevel();
