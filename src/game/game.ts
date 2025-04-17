@@ -6,6 +6,7 @@ import { createCollectibles, Collectible, DEFAULT_COLLECTIBLES } from './collect
 import { createEnemies, Enemy, DEFAULT_ENEMIES } from './enemies';
 import { UIManager } from './ui-manager';
 import { generateLevel, DEFAULT_LEVEL_PARAMS } from './level-generator';
+import { getCurrentTheme } from './color-config';
 
 const CAMERA_CONFIG = {
   MIN_X: -40,
@@ -19,6 +20,12 @@ interface GameOptions {
   useProceduralLevel?: boolean;
   playerColor?: string;
 }
+
+const DEFAULT_GAME_OPTIONS: GameOptions = {
+  developmentMode: false,
+  useProceduralLevel: false,
+  playerColor: undefined
+};
 
 export class Game {
   private scene: THREE.Scene;
@@ -45,25 +52,47 @@ export class Game {
   private lastTime: number = 0;
   private animationFrameId: number | null = null;
   
-  constructor(container: HTMLElement = document.body, options: GameOptions = {}) {
-    this.developmentMode = options.developmentMode || false;
-    this.useProceduralLevel = options.useProceduralLevel || false;
+  constructor(engine: any, container: HTMLElement | null = document.getElementById('game-canvas'), options: GameOptions = {}) {
+    const mergedOptions = { ...DEFAULT_GAME_OPTIONS, ...options };
+    this.developmentMode = mergedOptions.developmentMode;
+    this.useProceduralLevel = mergedOptions.useProceduralLevel;
     
     this.scene = createGameScene();
     this.camera = createGameCamera();
     
-    this.renderer = new THREE.WebGLRenderer({ 
-      antialias: true,
-      alpha: false 
-    });
-    this.renderer.setSize(window.innerWidth, window.innerHeight, true);
-    this.renderer.setPixelRatio(window.devicePixelRatio);
-    container.appendChild(this.renderer.domElement);
-    
-    this.renderer.domElement.style.display = 'block';
+    try {
+      this.renderer = new THREE.WebGLRenderer({ 
+        antialias: true,
+        alpha: false,
+        canvas: container instanceof HTMLCanvasElement ? container : undefined
+      });
+      this.renderer.setSize(window.innerWidth, window.innerHeight, true);
+      this.renderer.setPixelRatio(window.devicePixelRatio);
+      
+      // Only append to container if it's not a canvas element and is a valid HTML element
+      if (container && !(container instanceof HTMLCanvasElement)) {
+        container.appendChild(this.renderer.domElement);
+      } else if (!container) {
+        // If no container is provided and we're not using an existing canvas,
+        // append to body as a fallback
+        document.body.appendChild(this.renderer.domElement);
+      }
+      
+      this.renderer.domElement.style.display = 'block';
+      
+      // Set clear color explicitly
+      const themeColor = getCurrentTheme().background;
+      this.renderer.setClearColor(themeColor, 1);
+    } catch (error) {
+      console.error('Error creating renderer:', error);
+      // Fallback to a basic renderer if possible
+      this.renderer = new THREE.WebGLRenderer({ antialias: false });
+      this.renderer.setSize(window.innerWidth, window.innerHeight);
+      document.body.appendChild(this.renderer.domElement);
+    }
     
     this.uiManager = new UIManager();
-    this.player = new Player(DEFAULT_PLAYER, options.playerColor);
+    this.player = new Player(DEFAULT_PLAYER, mergedOptions.playerColor);
     
     this.setupGameElements();
     this.setupEventListeners();
@@ -129,18 +158,20 @@ export class Game {
       
       // Only register other keys when game is active
       if (!this.isPaused && !this.isGameOver) {
-        // Ensure we're not in a transition state (like after restart)
-        if (this.player && this.player.keys) {
-          this.player.keys[event.key] = true;
+        // Make sure keys object is initialized
+        if (!this.player.keys) {
+          this.player.keys = {};
         }
+        this.player.keys[event.key] = true;
       }
     });
     
     window.addEventListener('keyup', (event) => {
-      // Ensure player and keys object exist
-      if (this.player && this.player.keys) {
-        this.player.keys[event.key] = false;
+      // Make sure keys object is initialized
+      if (!this.player.keys) {
+        this.player.keys = {};
       }
+      this.player.keys[event.key] = false;
     });
     
     const pauseButton = document.getElementById('pause-button');
@@ -197,11 +228,77 @@ export class Game {
     this.lastTime = performance.now();
   }
   
+  /**
+   * Load assets and setup game - called by the engine
+   */
+  public async loadAssets(): Promise<void> {
+    // This would normally load assets, but for now just start the game
+    
+    // Ensure UI manager starts in the right state
+    this.uiManager.hideMainMenu();
+    this.uiManager.updateScore(0, false);
+    
+    // Set game state to running
+    this.isPaused = false;
+    this.isGameOver = false;
+    
+    // Make sure platforms and entities are visible
+    this.scene.add(this.player.mesh);
+    
+    return Promise.resolve();
+  }
+  
+  /**
+   * Update game state - called by the engine each frame
+   * @param deltaTime Time in seconds since last frame
+   */
+  public update(deltaTime: number): void {
+    if (this.isPaused || this.isGameOver) {
+      return;
+    }
+    
+    const cappedDeltaTime = Math.min(deltaTime, 0.1);
+    
+    this.enemies.forEach(enemy => {
+      enemy.update(cappedDeltaTime);
+      enemy.checkPlatformCollisions(this.platforms);
+    });
+    
+    this.player.update(cappedDeltaTime);
+    this.player.checkPlatformCollisions(this.platforms);
+    
+    this.updateCamera(cappedDeltaTime);
+    
+    const collectedItems = this.player.checkCollectibleCollisions(this.collectibles);
+    if (collectedItems.length > 0) {
+      this.uiManager.updateScore(collectedItems.length, true);
+    }
+    
+    this.player.checkEnemyCollisions(this.enemies);
+    
+    if (this.player.checkFallOutOfBounds(this.minVisibleY)) {
+      this.handleGameOver();
+    }
+  }
+  
+  /**
+   * Render the game - called by the engine each frame
+   */
+  public render(): void {
+    this.renderer.render(this.scene, this.camera);
+  }
+  
+  /**
+   * Legacy method for standalone use
+   */
   public start(): void {
     this.lastTime = performance.now();
     this.animate();
   }
   
+  /**
+   * Legacy method for standalone use
+   */
   public stop(): void {
     if (this.animationFrameId !== null) {
       cancelAnimationFrame(this.animationFrameId);
@@ -269,9 +366,7 @@ export class Game {
     if (!this.useProceduralLevel) return;
     
     // Clear any held keys first to prevent inputs being carried over
-    if (this.player) {
-      this.player.keys = {};
-    }
+    this.player.keys = {};
     
     this.currentLevelSeed = undefined;
     this.restartGame(true);
@@ -292,7 +387,7 @@ export class Game {
       this.scene.add(this.camera);
     }
     
-    if (this.player && this.player.mesh) {
+    if (this.player.mesh) {
       this.scene.remove(this.player.mesh);
       if (this.player.mesh.geometry) this.player.mesh.geometry.dispose();
       if (this.player.mesh.material) {
@@ -302,8 +397,8 @@ export class Game {
           this.player.mesh.material.dispose();
         }
       }
-      this.player.keys = {};
     }
+    this.player.keys = {};
     
     this.enemies.forEach(enemy => {
       if (enemy.mesh) {
@@ -350,8 +445,10 @@ export class Game {
     this.platforms = [];
     
     try {
-      if (window && (window as any).gc) {
-        (window as any).gc();
+      // Access garbage collection if available in the environment
+      const win = window as unknown as { gc?: () => void };
+      if (win && win.gc) {
+        win.gc();
       }
     } catch (e) {
       // Ignore errors with garbage collection
@@ -395,7 +492,9 @@ export class Game {
     this.setupGameElements();
     // Fix potential restart bug by passing the URL parameter
     const urlParams = new URLSearchParams(window.location.search);
-    const playerColor = urlParams.get('player') || (window as any).gameOptions?.playerColor;
+    const windowWithOptions = window as Window & { gameOptions?: { playerColor?: string } };
+    const windowGameOptions = windowWithOptions.gameOptions || {};
+    const playerColor = urlParams.get('player') || windowGameOptions.playerColor;
     this.player = new Player(DEFAULT_PLAYER, playerColor);
     
     // Ensure all keys are reset to prevent any keys from previous game state from affecting this one
@@ -415,40 +514,20 @@ export class Game {
     this.lastTime = performance.now();
   }
   
+  /**
+   * Legacy animation method, now replaced by the engine-driven update/render
+   */
   private animate = (time: number = 0): void => {
     this.animationFrameId = requestAnimationFrame(this.animate);
-    
-    this.renderer.render(this.scene, this.camera);
-    
-    if (this.isPaused || this.isGameOver) {
-      return;
-    }
     
     const deltaTime = (time - this.lastTime) / 1000;
     this.lastTime = time;
     
-    const cappedDeltaTime = Math.min(deltaTime, 0.1);
+    // Reuse the update method
+    this.update(deltaTime);
     
-    this.enemies.forEach(enemy => {
-      enemy.update(cappedDeltaTime);
-      enemy.checkPlatformCollisions(this.platforms);
-    });
-    
-    this.player.update(cappedDeltaTime);
-    this.player.checkPlatformCollisions(this.platforms);
-    
-    this.updateCamera(cappedDeltaTime);
-    
-    const collectedItems = this.player.checkCollectibleCollisions(this.collectibles);
-    if (collectedItems.length > 0) {
-      this.uiManager.updateScore(collectedItems.length, true);
-    }
-    
-    this.player.checkEnemyCollisions(this.enemies);
-    
-    if (this.player.checkFallOutOfBounds(this.minVisibleY)) {
-      this.handleGameOver();
-    }
+    // Render scene
+    this.render();
   }
   
   public destroy(): void {

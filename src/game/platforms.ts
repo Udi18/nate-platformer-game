@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { GAME_CONFIG } from './scene';
-import { getCurrentTheme, PlatformColor } from './color-config';
+import { getCurrentTheme } from './color-config';
 
 /**
  * Platform definition interface

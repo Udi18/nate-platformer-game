@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { getCurrentTheme, BackgroundColor } from './color-config';
+import { getCurrentTheme } from './color-config';
 
 /**
  * Game constants for scene configuration
@@ -34,7 +34,10 @@ export const GAME_CONFIG = {
  */
 export function createGameScene(): THREE.Scene {
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(getCurrentTheme().background);
+  
+  // Set the background color from the current theme
+  const themeColor = getCurrentTheme().background;
+  scene.background = new THREE.Color(themeColor);
   
   return scene;
 }

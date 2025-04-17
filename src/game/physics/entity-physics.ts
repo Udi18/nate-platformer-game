@@ -86,7 +86,6 @@ export class EntityPhysics {
    */
   public checkPlatformCollisions(platforms: THREE.Mesh[]): void {
     // Default to not grounded
-    let wasGrounded = this.isGrounded;
     this.isGrounded = false;
     
     for (const platform of platforms) {

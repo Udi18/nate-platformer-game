@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { getCurrentTheme, EnemyColor } from './color-config';
+import { getCurrentTheme } from './color-config';
 import { GAME_CONFIG } from './scene';
 import { EnemyPhysics, EnemyMovementType } from './physics/enemy-physics';
 

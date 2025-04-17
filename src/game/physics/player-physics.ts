@@ -1,5 +1,4 @@
 import { EntityPhysics } from './entity-physics';
-import * as THREE from 'three';
 import { Collectible } from '../collectibles';
 import { Enemy } from '../enemies';
 

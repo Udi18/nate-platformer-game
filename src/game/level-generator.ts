@@ -1,7 +1,7 @@
 import { PlatformDefinition } from './platforms';
 import { EnemyDefinition } from './enemies';
 import { CollectibleDefinition } from './collectibles';
-import { getCurrentTheme, PlatformColor, EnemyColor, CollectibleColor } from './color-config';
+import { getCurrentTheme } from './color-config';
 
 export interface LevelGenerationParams {
   seed?: number;
@@ -572,7 +572,7 @@ export function generateEnemies(
       
       const platformLeft = platform.position.x - platform.width / 2;
       
-      let maxEnemies = platform.width < 3 ? 1 : params.maxEnemiesPerPlatform;
+      const maxEnemies = platform.width < 3 ? 1 : params.maxEnemiesPerPlatform;
       
       const numEnemies = Math.floor(
         randomBetween(params.minEnemiesPerPlatform, maxEnemies + 0.99)
