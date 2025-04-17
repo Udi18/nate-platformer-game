@@ -1,9 +1,12 @@
 import * as THREE from 'three';
 import { createGameScene, createGameCamera, handleResize, GAME_CONFIG } from './scene';
-import { createPlatforms, PlatformDefinition, DEFAULT_PLATFORMS } from './platforms';
+import { createPlatforms, DEFAULT_PLATFORMS } from './platforms';
+import type { PlatformDefinition } from './platforms';
 import { Player, DEFAULT_PLAYER } from './player';
-import { createCollectibles, Collectible, DEFAULT_COLLECTIBLES } from './collectibles';
-import { createEnemies, Enemy, DEFAULT_ENEMIES } from './enemies';
+import { createCollectibles, DEFAULT_COLLECTIBLES } from './collectibles';
+import type { Collectible } from './collectibles';
+import { createEnemies, DEFAULT_ENEMIES } from './enemies';
+import type { Enemy } from './enemies';
 import { UIManager } from './ui-manager';
 import { generateLevel, DEFAULT_LEVEL_PARAMS } from './level-generator';
 import { getCurrentTheme } from './color-config';

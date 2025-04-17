@@ -29,6 +29,10 @@ class MockOrthographicCamera {
 class MockPlaneGeometry {
   parameters = { width: 10, height: 1 }
   dispose = vi.fn()
+  
+  constructor(width = 10, height = 1) {
+    this.parameters = { width, height };
+  }
 }
 
 class MockCircleGeometry {
@@ -44,9 +48,24 @@ class MockMeshBasicMaterial {
 
 class MockMesh {
   position = { x: 0, y: 0, z: 0, set: vi.fn() }
+  scale = { x: 1, y: 1, z: 1 }
   geometry = new MockPlaneGeometry()
   material = new MockMeshBasicMaterial()
   visible = true
+  children = []
+  
+  add = vi.fn().mockImplementation(child => {
+    this.children.push(child);
+    return this;
+  })
+  
+  remove = vi.fn().mockImplementation(child => {
+    const index = this.children.indexOf(child);
+    if (index !== -1) {
+      this.children.splice(index, 1);
+    }
+    return this;
+  })
 }
 
 // Skip complete test coverage for Game class since it's heavily dependent on Three.js

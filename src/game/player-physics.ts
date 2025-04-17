@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import { Collectible } from './collectibles';
-import { Enemy } from './enemies';
+import type { Collectible } from './collectibles';
+import type { Enemy } from './enemies';
 
 export interface PhysicsState {
   position: { x: number; y: number };

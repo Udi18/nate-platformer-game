@@ -1,11 +1,11 @@
 import * as THREE from 'three';
 import { GAME_CONFIG } from './scene';
-import { Collectible } from './collectibles';
-import { Enemy } from './enemies';
+import type { Collectible } from './collectibles';
+import type { Enemy } from './enemies';
 import { getCurrentTheme, PlayerColor } from './color-config';
 import { PlayerSprite } from './player-sprite';
 import { PlayerPhysics } from './physics/player-physics';
-import { PhysicsState } from './physics/entity-physics';
+import type { PhysicsState } from './physics/entity-physics';
 
 export interface PlayerState {
   position: { x: number; y: number };
@@ -18,23 +18,24 @@ export interface PlayerDisplaySettings {
 }
 
 export const DEFAULT_PLAYER = {
-  width: 1.25,
-  height: 1.25,
+  width: 0.9,
+  height: 1.1,
   position: {
     x: 0,
     y: -3.5
   },
   speed: 5,
-  jumpForce: 10,
-  gravity: 20,
+  jumpForce: 12.5,
+  gravity: 25,
   displaySettings: {
-    useSprite: true
+    useSprite: false
   }
 };
 
 export class Player {
   // Visual representation
   public mesh: THREE.Mesh;
+  public directionMarker: THREE.Mesh;
   
   // Components
   private physics: PlayerPhysics;
@@ -90,11 +91,12 @@ export class Player {
       playerColor = getCurrentTheme().player;
     }
     
-    // Create square material (for non-sprite mode)
+    // Create character material (for non-sprite mode)
     this.squareMaterial = new THREE.MeshBasicMaterial({ 
       color: playerColor,
-      transparent: true,
-      side: THREE.DoubleSide
+      transparent: false,
+      side: THREE.DoubleSide,
+      wireframe: false
     });
     
     // Use appropriate material based on display settings
@@ -102,9 +104,45 @@ export class Player {
       ? this.sprite.getMaterial() 
       : this.squareMaterial;
     
-    // Create mesh
+    // Create main mesh
     this.mesh = new THREE.Mesh(geometry, initialMaterial);
     this.updateMeshPosition();
+    
+    // Create direction marker (a more visible arrow pointing in the facing direction)
+    const arrowWidth = config.width * 0.7;
+    const arrowHeight = config.height * 0.4;
+    
+    // Create an arrow shape for clearer direction indication
+    const markerGeometry = new THREE.PlaneGeometry(arrowWidth, arrowHeight);
+    const markerMaterial = new THREE.MeshBasicMaterial({
+      color: 0x000000, // Black for contrast
+      transparent: false,
+      side: THREE.DoubleSide
+    });
+    this.directionMarker = new THREE.Mesh(markerGeometry, markerMaterial);
+    
+    // Add a white outline or a different material to make it stand out
+    const outlineMaterial = new THREE.MeshBasicMaterial({
+      color: 0xFFFFFF, // White outline
+      wireframe: true,
+      side: THREE.DoubleSide
+    });
+    
+    // Create an outline mesh slightly larger than the marker
+    const outlineGeometry = new THREE.PlaneGeometry(arrowWidth * 1.1, arrowHeight * 1.1);
+    const outlineMesh = new THREE.Mesh(outlineGeometry, outlineMaterial);
+    outlineMesh.position.set(0, 0, 0.05); // Position slightly behind the marker
+    this.directionMarker.add(outlineMesh);
+    
+    // Position marker on the right side of the player (default facing right)
+    this.directionMarker.position.set(
+      config.width * 0.7, // Offset from center
+      0, // Centered vertically with player
+      0.1 // Slightly in front of player
+    );
+    
+    // Add direction marker as child of player mesh
+    this.mesh.add(this.directionMarker);
     
     // Set initial sprite frame if using sprites
     if (this.displaySettings.useSprite && this.sprite) {
@@ -127,6 +165,11 @@ export class Player {
     this.mesh.material = useSprite && this.sprite 
       ? this.sprite.getMaterial() 
       : this.squareMaterial;
+    
+    // Show/hide direction marker based on display mode
+    if (this.directionMarker) {
+      this.directionMarker.visible = !useSprite;
+    }
     
     // Update sprite frame if switching to sprite mode
     if (useSprite && this.sprite) {
@@ -164,6 +207,24 @@ export class Player {
     // Update sprite animation if using sprites
     if (this.displaySettings.useSprite && this.sprite) {
       this.sprite.updateAnimation(deltaTime, isMoving, facingLeft, this.mesh);
+      
+      // Flip sprite based on direction
+      if (facingLeft && this.mesh.scale.x > 0) {
+        this.mesh.scale.x *= -1;
+      } else if (!facingLeft && this.mesh.scale.x < 0) {
+        this.mesh.scale.x *= -1;
+      }
+    } else {
+      // Update direction marker for non-sprite mode
+      const markerOffset = this.mesh.geometry.parameters.width * 0.7;
+      
+      if (facingLeft) {
+        // Position marker on the left side
+        this.directionMarker.position.x = -markerOffset;
+      } else {
+        // Position marker on the right side
+        this.directionMarker.position.x = markerOffset;
+      }
     }
     
     // Update the mesh position

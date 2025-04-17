@@ -1,6 +1,6 @@
-import { PlatformDefinition } from './platforms';
-import { EnemyDefinition } from './enemies';
-import { CollectibleDefinition } from './collectibles';
+import type { PlatformDefinition } from './platforms';
+import type { EnemyDefinition } from './enemies';
+import type { CollectibleDefinition } from './collectibles';
 import { getCurrentTheme } from './color-config';
 
 export interface LevelGenerationParams {

@@ -1,6 +1,6 @@
 import { EntityPhysics } from './entity-physics';
-import { Collectible } from '../collectibles';
-import { Enemy } from '../enemies';
+import type { Collectible } from '../collectibles';
+import type { Enemy } from '../enemies';
 
 /**
  * Player-specific physics component that extends the base entity physics
