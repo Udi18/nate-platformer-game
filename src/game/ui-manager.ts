@@ -6,6 +6,7 @@ import { applyThemeToUI } from './color-config';
 export class UIManager {
   // DOM elements
   private scoreValueElement: HTMLElement;
+  private scoreContainer: HTMLElement;
   private pauseOverlay: HTMLElement;
   private mainMenuOverlay: HTMLElement;
   private gameOverOverlay: HTMLElement;
@@ -19,9 +20,17 @@ export class UIManager {
   constructor() {
     // Get references to DOM elements
     this.scoreValueElement = document.getElementById('score-value') as HTMLElement;
+    this.scoreContainer = document.getElementById('score-container') as HTMLElement;
     this.pauseOverlay = document.getElementById('pause-overlay') as HTMLElement;
     this.mainMenuOverlay = document.getElementById('main-menu') as HTMLElement;
     this.gameOverOverlay = document.getElementById('game-over-overlay') as HTMLElement;
+    
+    // Position score in top-left corner
+    if (this.scoreContainer) {
+      this.scoreContainer.style.position = 'absolute';
+      this.scoreContainer.style.top = '10px';
+      this.scoreContainer.style.left = '10px';
+    }
     
     // Initialize UI with default values
     this.updateScore(0);

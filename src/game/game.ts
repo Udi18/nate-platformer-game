@@ -5,6 +5,7 @@ import type { PlatformDefinition } from './platforms';
 import { Player, DEFAULT_PLAYER } from './player';
 import { createCollectibles, DEFAULT_COLLECTIBLES } from './collectibles';
 import type { Collectible } from './collectibles';
+import { Coin } from './collectibles/coin';
 import { createEnemies, DEFAULT_ENEMIES } from './enemies';
 import type { Enemy } from './enemies';
 import { UIManager } from './ui-manager';
@@ -120,11 +121,11 @@ export class Game {
       
       this.currentLevelSeed = level.seed;
       this.platforms = this.createPlatformsWithMeshes(level.platforms);
-      this.collectibles = createCollectibles(this.scene, level.collectibles);
+      this.collectibles = Coin.createCoins(this.scene, level.collectibles);
       this.enemies = createEnemies(this.scene, level.enemies);
     } else {
       this.platforms = this.createPlatformsWithMeshes(DEFAULT_PLATFORMS);
-      this.collectibles = createCollectibles(this.scene, DEFAULT_COLLECTIBLES);
+      this.collectibles = Coin.createCoins(this.scene, DEFAULT_COLLECTIBLES);
       this.enemies = [];
     }
   }
@@ -265,6 +266,13 @@ export class Game {
     this.enemies.forEach(enemy => {
       enemy.update(cappedDeltaTime);
       enemy.checkPlatformCollisions(this.platforms);
+    });
+    
+    // Update collectibles (for animation)
+    this.collectibles.forEach(collectible => {
+      if ('update' in collectible && typeof collectible.update === 'function') {
+        collectible.update(cappedDeltaTime);
+      }
     });
     
     this.player.update(cappedDeltaTime);
